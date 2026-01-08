@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    kotlin("plugin.serialization") version "2.0.21" // Usa la misma versión de Kotlin de tu proyecto
 }
 
 kotlin {
@@ -28,6 +29,7 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
+            implementation("com.google.android.material:material:1.12.0")
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
         }
@@ -44,6 +46,20 @@ kotlin {
 
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+
+            implementation("io.ktor:ktor-client-core:2.3.12")
+            implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
+            implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
+
+        }
+
+        androidMain.dependencies {
+            implementation("io.ktor:ktor-client-okhttp:2.3.12")
+        }
+
+        // MOTOR PARA iOS
+        iosMain.dependencies {
+            implementation("io.ktor:ktor-client-darwin:2.3.12")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
