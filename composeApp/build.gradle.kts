@@ -9,12 +9,13 @@ plugins {
 }
 
 kotlin {
+    // Registro correcto y explícito del target de Android
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -24,7 +25,7 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -37,6 +38,10 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+
+            // Referencia directa a iconos para evitar el error "Unresolved reference: materialIconsCore"
+            implementation("org.jetbrains.compose.material:material-icons-core:1.7.3")
+
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
         }
@@ -76,4 +81,3 @@ android {
 dependencies {
     debugImplementation(compose.uiTooling)
 }
-
