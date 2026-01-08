@@ -15,19 +15,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.gen.maximizemagic.network.*
-import com.gen.maximizemagic.ui.components.MainLayout
+import com.gen.maximizemagic.MainLayout // Asegúrate de que apunte al archivo donde está MainLayout
 
 @Composable
-fun ParkDetailScreen(parkId: String, parkName: String) {
-    // Inicializamos el cliente de la API
+fun ParkDetailScreen(
+    parkId: String,
+    parkName: String,
+    onBack: () -> Unit // <--- AGREGADO: Parámetro para navegación
+) {
     val api = remember { ParkApi() }
-
-    // Estados para la lista de atracciones e indicación de carga
     var attractions by remember { mutableStateOf<List<AttractionAlternative>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Efecto para cargar los datos cuando cambia el parkId o al iniciar la pantalla
     LaunchedEffect(parkId) {
         if (parkId.isEmpty()) {
             errorMessage = "ID de parque no válido"
@@ -38,7 +38,6 @@ fun ParkDetailScreen(parkId: String, parkName: String) {
         try {
             isLoading = true
             errorMessage = null
-            // Llamada a la nueva API alternativa
             val result = api.getAttractions(parkId)
             attractions = result
 
@@ -52,17 +51,20 @@ fun ParkDetailScreen(parkId: String, parkName: String) {
         }
     }
 
-    MainLayout(title = parkName, showBackButton = true) { paddingValues ->
+    // Pasamos onBackClick = onBack para habilitar la flecha de regreso
+    MainLayout(
+        title = parkName,
+        showBackButton = true,
+        onBackClick = onBack
+    ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
             if (isLoading) {
-                // Indicador de carga centrado
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (errorMessage != null) {
-                // Mensaje de error o parque cerrado
                 Column(
                     modifier = Modifier.align(Alignment.Center).padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -77,9 +79,7 @@ fun ParkDetailScreen(parkId: String, parkName: String) {
                     )
                 }
             } else {
-                // Lista de atracciones tabulada
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    // Cabecera de la tabla
                     item {
                         Row(
                             modifier = Modifier
@@ -87,22 +87,12 @@ fun ParkDetailScreen(parkId: String, parkName: String) {
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(12.dp)
                         ) {
-                            Text(
-                                text = "Atracción",
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Espera",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Text("Atracción", Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                            Text("Espera", fontWeight = FontWeight.Bold)
                         }
                         HorizontalDivider()
                     }
 
-                    // Filas de la tabla con los datos de Queue-Times
                     items(attractions) { attraction ->
                         Row(
                             modifier = Modifier
@@ -116,7 +106,6 @@ fun ParkDetailScreen(parkId: String, parkName: String) {
                                 style = MaterialTheme.typography.bodyMedium
                             )
 
-                            // Lógica para mostrar minutos o "Cerrado"
                             val isWaitTimeHigh = attraction.wait_time > 45
                             Text(
                                 text = if (attraction.is_open) "${attraction.wait_time} min" else "Cerrado",

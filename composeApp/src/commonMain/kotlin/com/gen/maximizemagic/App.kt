@@ -5,7 +5,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.gen.maximizemagic.model.*
-import com.gen.maximizemagic.ui.MaximizeMagicScreen
 
 // Enumeración para manejar el flujo de navegación entre pantallas
 enum class Screen {
@@ -21,14 +20,14 @@ fun App() {
     var selectedParkId by remember { mutableStateOf("") }
     var selectedParkName by remember { mutableStateOf("") }
 
-    // IDs reales de la API themeparks.wiki para Orlando, FL
+    // IDs reales de la API Queue-Times para Orlando, FL
     val parkIds = mapOf(
         "Magic Kingdom" to "6",
         "Animal Kingdom" to "8",
         "Disney Hollywood Studios" to "7",
         "Universal Studios" to "65",
-        "Universal Island of Adventures" to "64"
-        //, "Universal Epic" to "?"
+        "Universal Island of Adventures" to "64",
+        "Universal Epic" to "65" // ID temporal
     )
 
     MaterialTheme {
@@ -46,7 +45,6 @@ fun App() {
             Screen.Parks -> {
                 ThemeParksScreen(onParkClick = { parkName ->
                     selectedParkName = parkName
-                    // Obtenemos el ID del mapa; si no existe usamos un string vacío
                     selectedParkId = parkIds[parkName] ?: ""
                     currentScreen = Screen.Detail
                 })
@@ -54,7 +52,11 @@ fun App() {
             Screen.Detail -> {
                 ParkDetailScreen(
                     parkId = selectedParkId,
-                    parkName = selectedParkName
+                    parkName = selectedParkName,
+                    onBack = {
+                        // Cambiamos el estado para regresar a la lista de parques
+                        currentScreen = Screen.Parks
+                    }
                 )
             }
         }
