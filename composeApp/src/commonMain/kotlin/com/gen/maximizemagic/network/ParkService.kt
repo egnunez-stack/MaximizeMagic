@@ -25,43 +25,24 @@ data class AttractionAlternative(
     val id: Int,
     val name: String,
     val is_open: Boolean = false,
-    val wait_time: Int = 0
+    val wait_time: Int = 0,
+    val last_updated: String = "" // Guardamos la hora de actualización
 )
 
 class ParkApi {
     private val client = HttpClient {
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                coerceInputValues = true
-            })
+            json(Json { ignoreUnknownKeys = true; coerceInputValues = true })
         }
     }
 
-    suspend fun getAttractions(parkId: String): List<AttractionAlternative> {
-        if (parkId.isEmpty()) return emptyList()
-
+    // AHORA: Devuelve la respuesta completa del parque
+    suspend fun getParkData(parkId: String): QueueTimesResponse? {
         return try {
             val url = "https://queue-times.com/parks/$parkId/queue_times.json"
-            val response = client.get(url).body<QueueTimesResponse>()
-
-            // Combinamos todas las atracciones posibles
-            val allRides = mutableListOf<AttractionAlternative>()
-            allRides.addAll(response.rides)
-
-            response.lands.forEach { land ->
-                allRides.addAll(land.rides)
-            }
-
-            // Filtro importante: Quitamos elementos que no tengan nombre o sean duplicados
-            // Algunos parques reportan "Entradas" o "Servicios" como rides con wait_time 0
-            allRides.filter { it.name.isNotBlank() }
-                .distinctBy { it.id }
-                .sortedBy { it.name }
-
+            client.get(url).body<QueueTimesResponse>()
         } catch (e: Exception) {
-            println("DEBUG: Error cargando parkId $parkId -> ${e.message}")
-            emptyList()
+            null
         }
     }
 }
