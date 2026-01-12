@@ -47,8 +47,10 @@ fun ParkDetailScreen(parkId: String, parkName: String, onBack: () -> Unit) {
     }
 
     val onRideClick: (AttractionAlternative) -> Unit = { attraction ->
-        val query = "${attraction.name} $parkName".replace(" ", "+")
-        val url = "https://www.google.com/maps/search/?api=1&query=$query"
+        val destination = "${attraction.name} $parkName".replace(" ", "+")
+        val origin = "$parkName Entrance".replace(" ", "+")
+        // Usamos el modo 'dir' (directions) con 'walking' para mostrar el camino a pie desde la entrada
+        val url = "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&travelmode=walking"
         uriHandler.openUri(url)
     }
 
@@ -152,7 +154,7 @@ fun ParkDetailScreen(parkId: String, parkName: String, onBack: () -> Unit) {
                                         Text("✨ Recomendación Mágica", fontWeight = FontWeight.Bold, color = Color(0xFFFBC02D))
                                         Text("¡Ve a ${recommendation.name} ahora!", style = MaterialTheme.typography.titleMedium)
                                         Text("¡Solo ${recommendation.wait_time} min de espera!", fontWeight = FontWeight.ExtraBold)
-                                        Text("Haz clic para ver ubicación 📍", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                        Text("Haz clic para ver el camino desde la entrada 📍", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                                     }
                                 }
                             }
