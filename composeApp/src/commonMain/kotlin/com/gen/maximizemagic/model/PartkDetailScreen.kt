@@ -2,6 +2,7 @@ package com.gen.maximizemagic.model
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -27,10 +30,12 @@ fun ParkDetailScreen(parkId: String, parkName: String, onBack: () -> Unit) {
     val api = remember { ParkApi() }
     var parkData by remember { mutableStateOf<QueueTimesResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    val uriHandler = LocalUriHandler.current
 
-    // --- ESTADOS DE FILTRO ---
+    // --- ESTADOS DE FILTRO Y ORDEN ---
     var searchQuery by remember { mutableStateOf("") }
     var hideClosed by remember { mutableStateOf(false) }
+    var sortByWaitTime by remember { mutableStateOf(false) }
 
     LaunchedEffect(parkId) {
         try {
@@ -39,6 +44,12 @@ fun ParkDetailScreen(parkId: String, parkName: String, onBack: () -> Unit) {
         } finally {
             isLoading = false
         }
+    }
+
+    val onRideClick: (AttractionAlternative) -> Unit = { attraction ->
+        val query = "${attraction.name} $parkName".replace(" ", "+")
+        val url = "https://www.google.com/maps/search/?api=1&query=$query"
+        uriHandler.openUri(url)
     }
 
     MainLayout(title = parkName, showBackButton = true, onBackClick = onBack) { paddingValues ->
@@ -50,30 +61,46 @@ fun ParkDetailScreen(parkId: String, parkName: String, onBack: () -> Unit) {
                 shadowElevation = 2.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Buscar por atracción o área...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        placeholder = { Text("Buscar...", fontSize = 14.sp) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(20.dp)) },
                         singleLine = true,
-                        shape = MaterialTheme.shapes.medium
+                        textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        )
                     )
 
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Checkbox(
-                            checked = hideClosed,
-                            onCheckedChange = { hideClosed = it }
-                        )
-                        Text(
-                            text = "Ocultar atracciones cerradas",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(start = 4.dp)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = hideClosed,
+                                onCheckedChange = { hideClosed = it },
+                                modifier = Modifier.scale(0.8f)
+                            )
+                            Text("Ocultar cerradas", style = MaterialTheme.typography.bodySmall)
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = sortByWaitTime,
+                                onCheckedChange = { sortByWaitTime = it },
+                                modifier = Modifier.scale(0.8f)
+                            )
+                            Text("Más espera primero", style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
             }
@@ -95,26 +122,29 @@ fun ParkDetailScreen(parkId: String, parkName: String, onBack: () -> Unit) {
                     }
                 }
             } else {
-                // --- PROCESAMIENTO DE FILTROS ---
-                val allFilteredRides = (parkData!!.rides + parkData!!.lands.flatMap { it.rides })
-                    .filter { ride ->
-                        val matchesSearch = ride.name.contains(searchQuery, ignoreCase = true)
-                        val matchesOpen = if (hideClosed) ride.is_open else true
-                        matchesSearch && matchesOpen
-                    }
+                val allRidesRaw = (parkData!!.rides + parkData!!.lands.flatMap { it.rides })
+
+                val allFilteredRides = allRidesRaw.filter { ride ->
+                    val matchesSearch = ride.name.contains(searchQuery, ignoreCase = true)
+                    val matchesOpen = if (hideClosed) ride.is_open else true
+                    matchesSearch && matchesOpen
+                }.let { list ->
+                    if (sortByWaitTime) list.sortedByDescending { it.wait_time } else list
+                }
 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-
-                    // --- 2. SECCIÓN: RECOMENDACIÓN MÁGICA (Solo si no hay búsqueda activa) ---
-                    if (searchQuery.isEmpty()) {
-                        val recommendation = allFilteredRides
+                    if (searchQuery.isEmpty() && !sortByWaitTime) {
+                        val recommendation = allRidesRaw
                             .filter { it.is_open && it.wait_time > 0 }
                             .minByOrNull { it.wait_time }
 
                         if (recommendation != null) {
                             item {
                                 Card(
-                                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                    modifier = Modifier
+                                        .padding(16.dp)
+                                        .fillMaxWidth()
+                                        .clickable { onRideClick(recommendation) },
                                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9C4)),
                                     elevation = CardDefaults.cardElevation(4.dp)
                                 ) {
@@ -122,67 +152,66 @@ fun ParkDetailScreen(parkId: String, parkName: String, onBack: () -> Unit) {
                                         Text("✨ Recomendación Mágica", fontWeight = FontWeight.Bold, color = Color(0xFFFBC02D))
                                         Text("¡Ve a ${recommendation.name} ahora!", style = MaterialTheme.typography.titleMedium)
                                         Text("¡Solo ${recommendation.wait_time} min de espera!", fontWeight = FontWeight.ExtraBold)
+                                        Text("Haz clic para ver ubicación 📍", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                                     }
                                 }
                             }
                         }
                     }
 
-                    // --- 3. SECCIÓN: LISTADO FILTRADO POR ÁREAS ---
-                    parkData!!.lands.forEach { land ->
-                        // Filtramos las rides de este land específico
-                        val filteredRidesInLand = land.rides.filter { ride ->
-                            val matchesSearch = ride.name.contains(searchQuery, ignoreCase = true) ||
-                                    land.name.contains(searchQuery, ignoreCase = true)
+                    if (sortByWaitTime) {
+                        items(allFilteredRides) { attraction ->
+                            RideRow(attraction, onClick = { onRideClick(attraction) })
+                            HorizontalDivider(thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                        }
+                    } else {
+                        parkData!!.lands.forEach { land ->
+                            val filteredRidesInLand = land.rides.filter { ride ->
+                                val matchesSearch = ride.name.contains(searchQuery, ignoreCase = true) ||
+                                        land.name.contains(searchQuery, ignoreCase = true)
+                                val matchesOpen = if (hideClosed) ride.is_open else true
+                                matchesSearch && matchesOpen
+                            }
+
+                            if (filteredRidesInLand.isNotEmpty()) {
+                                stickyHeader {
+                                    Text(
+                                        text = land.name,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                }
+
+                                items(filteredRidesInLand) { attraction ->
+                                    RideRow(attraction, onClick = { onRideClick(attraction) })
+                                    HorizontalDivider(thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                                }
+                            }
+                        }
+
+                        val filteredStandaloneRides = parkData!!.rides.filter { ride ->
+                            val matchesSearch = ride.name.contains(searchQuery, ignoreCase = true)
                             val matchesOpen = if (hideClosed) ride.is_open else true
                             matchesSearch && matchesOpen
                         }
 
-                        if (filteredRidesInLand.isNotEmpty()) {
-                            stickyHeader {
-                                Text(
-                                    text = land.name,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
+                        if (filteredStandaloneRides.isNotEmpty()) {
+                            item {
+                                Text("Otras Atracciones", modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                             }
-
-                            items(filteredRidesInLand) { attraction ->
-                                RideRow(attraction)
-                                HorizontalDivider(thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
-                            }
+                            items(filteredStandaloneRides) { RideRow(it, onClick = { onRideClick(it) }) }
                         }
                     }
 
-                    // Atracciones sueltas filtradas
-                    val filteredStandaloneRides = parkData!!.rides.filter { ride ->
-                        val matchesSearch = ride.name.contains(searchQuery, ignoreCase = true)
-                        val matchesOpen = if (hideClosed) ride.is_open else true
-                        matchesSearch && matchesOpen
-                    }
-
-                    if (filteredStandaloneRides.isNotEmpty()) {
-                        item {
-                            Text(
-                                "Otras Atracciones",
-                                modifier = Modifier.padding(16.dp),
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                        }
-                        items(filteredStandaloneRides) { RideRow(it) }
-                    }
-
-                    // Mensaje si la búsqueda no arroja resultados
                     if (allFilteredRides.isEmpty()) {
                         item {
                             Text(
-                                "No se encontraron atracciones que coincidan con tu búsqueda.",
+                                "No se encontraron resultados.",
                                 modifier = Modifier.fillMaxWidth().padding(32.dp),
                                 textAlign = TextAlign.Center,
                                 color = Color.Gray
@@ -196,10 +225,22 @@ fun ParkDetailScreen(parkId: String, parkName: String, onBack: () -> Unit) {
 }
 
 @Composable
-fun RideRow(attraction: AttractionAlternative) {
+fun Modifier.scale(scale: Float): Modifier = this.then(Modifier.layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    layout(placeable.width, placeable.height) {
+        placeable.placeWithLayer(0, 0) {
+            scaleX = scale
+            scaleY = scale
+        }
+    }
+})
+
+@Composable
+fun RideRow(attraction: AttractionAlternative, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
