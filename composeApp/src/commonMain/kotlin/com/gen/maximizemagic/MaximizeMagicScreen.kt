@@ -3,7 +3,7 @@ package com.gen.maximizemagic
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,7 +24,11 @@ fun MaximizeMagicScreen(
     onConnectClick: () -> Unit,
     onExitClick: () -> Unit
 ) {
-    MainLayout(title = "Maximize the Magic") { paddingValues ->
+    // Aquí showBackButton es false porque es la pantalla de inicio
+    MainLayout(
+        title = "Maximize the Magic",
+        showBackButton = false
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -89,7 +93,7 @@ fun MaximizeMagicScreen(
 
 /**
  * Componente de diseño base que incluye la barra superior.
- * Se corrigió para que el onBackClick funcione correctamente.
+ * Se corrigió el uso de iconos y paddings para evitar parpadeos visuales.
  */
 @Composable
 fun MainLayout(
@@ -102,33 +106,35 @@ fun MainLayout(
         topBar = {
             Surface(
                 shadowElevation = 3.dp,
-                color = Color.White
+                color = Color.White,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier
-                        .statusBarsPadding()
-                        .fillMaxWidth()
+                        .statusBarsPadding() // Evita el notch
                         .height(56.dp)
                         .padding(horizontal = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (showBackButton) {
-                        // El botón de atrás ahora ejecuta la función onBackClick
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back",
-                                tint = TextPrimary
-                            )
+                    // Contenedor de ancho fijo para el botón para que el título no salte
+                    Box(modifier = Modifier.width(48.dp)) {
+                        if (showBackButton) {
+                            IconButton(onClick = onBackClick) {
+                                Icon(
+                                    // Usamos AutoMirrored para que la flecha apunte bien en todos los idiomas
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = TextPrimary
+                                )
+                            }
                         }
-                    } else {
-                        Spacer(modifier = Modifier.width(12.dp))
                     }
 
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary
+                        color = TextPrimary,
+                        modifier = Modifier.padding(start = 8.dp)
                     )
                 }
             }

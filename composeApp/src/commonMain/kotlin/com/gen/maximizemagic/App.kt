@@ -6,7 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.gen.maximizemagic.model.*
 
-// Enumeración para manejar el flujo de navegación entre pantallas
+// Clase de datos para centralizar la info de cada parque
+data class ParkInfo(
+    val id: String,
+    val openingHours: String,
+    val closingHours: String,
+    val tollPlazaCoords: String // Latitud y Longitud para el mapa
+)
+
 enum class Screen {
     Welcome,
     Parks,
@@ -15,46 +22,46 @@ enum class Screen {
 
 @Composable
 fun App() {
-    // Estados para controlar la navegación y la selección del parque
     var currentScreen by remember { mutableStateOf(Screen.Welcome) }
     var selectedParkId by remember { mutableStateOf("") }
     var selectedParkName by remember { mutableStateOf("") }
 
-    // IDs reales de la API Queue-Times para Orlando, FL
-    val parkIds = mapOf(
-        "Magic Kingdom" to "6",
-        "Animal Kingdom" to "8",
-        "Disney Hollywood Studios" to "7",
-        "Universal Studios" to "65",
-        "Universal Island of Adventures" to "64",
-        "Universal Epic" to "65" // ID temporal
+    // Diccionario completo con IDs de API, Horarios y Coordenadas de Peajes (Toll Plazas)
+    val parksData = mapOf(
+        "Magic Kingdom" to ParkInfo("6", "09:00", "23:00", "28.405,-81.579"),
+        "Animal Kingdom" to ParkInfo("8", "08:00", "19:00", "28.359,-81.591"),
+        "Disney Hollywood Studios" to ParkInfo("7", "09:00", "21:00", "28.352,-81.561"),
+        "Epcot" to ParkInfo("5", "09:00", "21:00", "28.369,-81.544"),
+        "Universal Studios Florida" to ParkInfo("65", "09:00", "21:00", "28.473,-81.465"),
+        "Islands of Adventure" to ParkInfo("64", "09:00", "21:00", "28.473,-81.465")
     )
 
     MaterialTheme {
         when (currentScreen) {
             Screen.Welcome -> {
                 MaximizeMagicScreen(
-                    onConnectClick = {
-                        currentScreen = Screen.Parks
-                    },
-                    onExitClick = {
-                        println("Saliendo de la app...")
-                    }
+                    onConnectClick = { currentScreen = Screen.Parks },
+                    onExitClick = { println("Saliendo...") }
                 )
             }
             Screen.Parks -> {
-                ThemeParksScreen(onParkClick = { parkName ->
-                    selectedParkName = parkName
-                    selectedParkId = parkIds[parkName] ?: ""
-                    currentScreen = Screen.Detail
-                })
+                ThemeParksScreen(
+                    parksMap = parksData,
+                    onNavigateToDetail = { name, info ->
+                        selectedParkName = name
+                        selectedParkId = info.id
+                        currentScreen = Screen.Detail
+                    },
+                    onBack = {
+                        currentScreen = Screen.Welcome
+                    }
+                )
             }
             Screen.Detail -> {
                 ParkDetailScreen(
                     parkId = selectedParkId,
                     parkName = selectedParkName,
                     onBack = {
-                        // Cambiamos el estado para regresar a la lista de parques
                         currentScreen = Screen.Parks
                     }
                 )
