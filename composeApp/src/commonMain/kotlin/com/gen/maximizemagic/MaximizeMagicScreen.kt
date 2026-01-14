@@ -1,5 +1,6 @@
 package com.gen.maximizemagic
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -15,6 +16,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 // Importamos los colores desde el paquete layout donde está tu Color.kt
 import com.gen.maximizemagic.ui.layout.*
+import maximizemagic.composeapp.generated.resources.Res
+
+import maximizemagic.composeapp.generated.resources.castillo
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Pantalla principal de bienvenida con el castillo y botones estilizados.
@@ -38,10 +43,12 @@ fun MaximizeMagicScreen(
             verticalArrangement = Arrangement.Center
         ) {
             // 1. Icono representativo (Castillo emoji)
-            Text(
-                text = "🏰",
-                fontSize = 80.sp,
-                modifier = Modifier.padding(bottom = 16.dp)
+            // Reemplaza el Text(text = "🏰", ...) por:
+
+            Image(
+                painter = painterResource(Res.drawable.castillo), // Uses the Multiplatform painterResource
+                contentDescription = "Castillo",
+                modifier = Modifier.size(250.dp).padding(bottom = 16.dp)
             )
 
             // 2. Texto de Bienvenida en Dorado
