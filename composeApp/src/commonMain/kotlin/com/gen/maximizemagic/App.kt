@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.gen.maximizemagic.model.*
+import com.gen.maximizemagic.ui.MaximizeMagicScreen
 
 // Clase de datos para centralizar la info de cada parque
 data class ParkInfo(
@@ -14,6 +15,7 @@ data class ParkInfo(
     val tollPlazaCoords: String // Latitud y Longitud para el mapa
 )
 
+// Flujo de navegación
 enum class Screen {
     Welcome,
     Parks,
@@ -22,12 +24,15 @@ enum class Screen {
 
 @Composable
 fun App() {
+    // Estados de navegación
     var currentScreen by remember { mutableStateOf(Screen.Welcome) }
     var selectedParkId by remember { mutableStateOf("") }
     var selectedParkName by remember { mutableStateOf("") }
 
-    // Diccionario completo con IDs de API, Horarios y Coordenadas de Peajes (Toll Plazas)
-    // Se añadió Universal Epic Universe
+    // Instancia del gestor de autenticación (Google Login)
+    val authManager = remember { AuthManager() }
+
+    // Diccionario de datos de los parques de Orlando
     val parksData = remember {
         mapOf(
             "Magic Kingdom" to ParkInfo("6", "09:00", "23:00", "28.405,-81.579"),
@@ -44,10 +49,17 @@ fun App() {
         when (currentScreen) {
             Screen.Welcome -> {
                 MaximizeMagicScreen(
-                    onConnectClick = { currentScreen = Screen.Parks },
+                    onConnectClick = {
+                        // Llamamos a la lógica de Google Auth
+                        authManager.signInWithGoogle { success ->
+                            if (success) {
+                                currentScreen = Screen.Parks
+                            }
+                        }
+                    },
                     onExitClick = {
-                        // Cerramos la aplicación usando la función nativa
-
+                        // Función nativa para cerrar la aplicación
+                        closeApp()
                     }
                 )
             }
@@ -69,6 +81,7 @@ fun App() {
                     parkId = selectedParkId,
                     parkName = selectedParkName,
                     onBack = {
+                        // Regresa a la lista de parques
                         currentScreen = Screen.Parks
                     }
                 )
