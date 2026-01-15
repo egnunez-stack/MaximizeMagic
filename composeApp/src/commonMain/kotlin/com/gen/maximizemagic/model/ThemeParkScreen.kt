@@ -19,7 +19,7 @@ import com.gen.maximizemagic.ParkInfo
 @Composable
 fun ThemeParksScreen(
     parksMap: Map<String, ParkInfo>,
-    userPhotoUrl: String?, // Add this line
+    userPhotoUrl: String?, // Recibimos la URL del usuario
     onNavigateToDetail: (String, ParkInfo) -> Unit,
     onBack: () -> Unit
 ) {
@@ -28,7 +28,13 @@ fun ThemeParksScreen(
     val selectedInfo = parksMap[selectedParkName]
     val uriHandler = LocalUriHandler.current
 
-    MainLayout(title = "Explorar", showBackButton = true, onBackClick = onBack) { paddingValues ->
+    // PASAMOS userPhotoUrl al MainLayout para que se vea en la TopBar
+    MainLayout(
+        title = "Explorar",
+        showBackButton = true,
+        onBackClick = onBack,
+        userPhotoUrl = userPhotoUrl
+    ) { paddingValues ->
         Column(
             modifier = Modifier.fillMaxSize().padding(paddingValues).padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally

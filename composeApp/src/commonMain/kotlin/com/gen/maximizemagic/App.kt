@@ -59,7 +59,7 @@ fun App() {
     // Efecto para cerrar el cartel de bienvenida automáticamente tras 3 segundos
     LaunchedEffect(showWelcomeMessage) {
         if (showWelcomeMessage) {
-            delay(3000)
+            delay(5000)
             showWelcomeMessage = false
         }
     }
@@ -108,19 +108,18 @@ fun App() {
             }
 
             // Cartel de bienvenida flotante (Toast personalizado)
-            if (showWelcomeMessage) {
+            if (showWelcomeMessage && userName.isNotEmpty()) {
                 Card(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 100.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
                     ),
                     elevation = CardDefaults.cardElevation(8.dp)
                 ) {
                     Text(
-                        "¡Bienvenido, $userName! ✨",
+                        "¡Bienvenido, $userName! ✨", // <--- Aquí aparece el nombre
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
                         style = MaterialTheme.typography.bodyLarge
                     )
