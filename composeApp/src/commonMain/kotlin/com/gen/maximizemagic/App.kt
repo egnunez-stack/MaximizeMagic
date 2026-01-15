@@ -56,9 +56,10 @@ fun App() {
         )
     }
 
-    // Efecto para cerrar el cartel de bienvenida automáticamente tras 3 segundos
+    // Efecto para cerrar el cartel de bienvenida automáticamente tras 5 segundos
     LaunchedEffect(showWelcomeMessage) {
         if (showWelcomeMessage) {
+            println("#MaximizeMagic: Iniciando contador de 5 segundos para bienvenida")
             delay(5000)
             showWelcomeMessage = false
         }
@@ -70,12 +71,19 @@ fun App() {
                 Screen.Welcome -> {
                     MaximizeMagicScreen(
                         onConnectClick = {
+                            println("#MaximizeMagic: Botón Conectar presionado")
                             authManager.signInWithGoogle { success, name, photo ->
+                                // LOG CRÍTICO: Aquí veremos qué devuelve Android
+                                println("#MaximizeMagic: Auth Callback -> Exito: $success, Nombre: $name, Foto: $photo")
+
                                 if (success) {
-                                    userName = name ?: "Usuario"
+                                    userName = name ?: "Usuario de Google"
                                     userPhotoUrl = photo
                                     showWelcomeMessage = true
                                     currentScreen = Screen.Parks
+                                    println("#MaximizeMagic: Estados actualizados. Navegando a Parks")
+                                } else {
+                                    println("#MaximizeMagic: Error en la autenticación")
                                 }
                             }
                         },
@@ -85,7 +93,7 @@ fun App() {
                 Screen.Parks -> {
                     ThemeParksScreen(
                         parksMap = parksData,
-                        userPhotoUrl = userPhotoUrl,
+                        userPhotoUrl = userPhotoUrl, // Se pasa el estado a la pantalla
                         onNavigateToDetail = { name, info ->
                             selectedParkName = name
                             selectedParkId = info.id
@@ -107,19 +115,21 @@ fun App() {
                 }
             }
 
-            // Cartel de bienvenida flotante (Toast personalizado)
-            if (showWelcomeMessage && userName.isNotEmpty()) {
+            // Cartel de bienvenida flotante
+            if (showWelcomeMessage) {
+                println("#MaximizeMagic: Dibujando cartel de bienvenida para: $userName")
                 Card(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 100.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     ),
                     elevation = CardDefaults.cardElevation(8.dp)
                 ) {
                     Text(
-                        "¡Bienvenido, $userName! ✨", // <--- Aquí aparece el nombre
+                        "¡Bienvenido, $userName! ✨",
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
                         style = MaterialTheme.typography.bodyLarge
                     )

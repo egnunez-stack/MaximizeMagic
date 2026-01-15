@@ -80,6 +80,9 @@ fun MainLayout(
     onBackClick: () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
+    // LOG DE SEGUIMIENTO EN LA TOP BAR
+    println("#MaximizeMagic: Renderizando MainLayout. Titulo: $title, FotoURL: ${userPhotoUrl ?: "NULA"}")
+
     Scaffold(
         topBar = {
             Surface(shadowElevation = 3.dp, color = Color.White, modifier = Modifier.fillMaxWidth()) {
@@ -87,8 +90,8 @@ fun MainLayout(
                     modifier = Modifier.statusBarsPadding().height(56.dp).padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // BOTÓN ATRÁS (Izquierda)
-                    Box(modifier = Modifier.width(48.dp)) {
+                    // 1. BOTÓN ATRÁS (Izquierda)
+                    Box(modifier = Modifier.width(48.dp), contentAlignment = Alignment.CenterStart) {
                         if (showBackButton) {
                             IconButton(onClick = onBackClick) {
                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = TextPrimary)
@@ -96,26 +99,30 @@ fun MainLayout(
                         }
                     }
 
-                    // TÍTULO (Ocupa el resto del espacio empujando lo demás a la derecha)
+                    // 2. TÍTULO (Centro - Usa weight para empujar la foto a la derecha)
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleLarge,
                         color = TextPrimary,
-                        modifier = Modifier.weight(1f).padding(start = 8.dp)
+                        modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
                     )
 
-                    // FOTO DE PERFIL (Derecha extrema)
+                    // 3. FOTO DE PERFIL (Derecha extrema)
                     if (userPhotoUrl != null) {
+                        println("#MaximizeMagic: Mostrando circulo de foto para URL: $userPhotoUrl")
                         Box(
                             modifier = Modifier
-                                .padding(end = 8.dp)
-                                .size(36.dp)
+                                .size(40.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primaryContainer),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("👤", fontSize = 18.sp)
+                            // Por ahora un emoji. Si ves el circulo con el emoji, es que la URL está llegando bien.
+                            Text("👤", fontSize = 20.sp)
                         }
+                    } else {
+                        // Espacio de reserva para que el titulo no se pegue al borde si no hay foto
+                        Spacer(modifier = Modifier.width(40.dp))
                     }
                 }
             }
