@@ -1,7 +1,9 @@
 package com.gen.maximizemagic
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -9,15 +11,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-// Importamos los colores desde el paquete layout donde está tu Color.kt
+// Importamos los colores desde el paquete layout
 import com.gen.maximizemagic.ui.layout.*
 import maximizemagic.composeapp.generated.resources.Res
-
 import maximizemagic.composeapp.generated.resources.castillo
 import org.jetbrains.compose.resources.painterResource
 
@@ -29,7 +32,7 @@ fun MaximizeMagicScreen(
     onConnectClick: () -> Unit,
     onExitClick: () -> Unit
 ) {
-    // Aquí showBackButton es false porque es la pantalla de inicio
+    // En la pantalla de inicio no mostramos flecha ni foto todavía
     MainLayout(
         title = "Maximize the Magic",
         showBackButton = false
@@ -42,11 +45,9 @@ fun MaximizeMagicScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // 1. Icono representativo (Castillo emoji)
-            // Reemplaza el Text(text = "🏰", ...) por:
-
+            // 1. Imagen del Castillo
             Image(
-                painter = painterResource(Res.drawable.castillo), // Uses the Multiplatform painterResource
+                painter = painterResource(Res.drawable.castillo),
                 contentDescription = "Castillo",
                 modifier = Modifier.size(250.dp).padding(bottom = 16.dp)
             )
@@ -100,12 +101,13 @@ fun MaximizeMagicScreen(
 
 /**
  * Componente de diseño base que incluye la barra superior.
- * Se corrigió el uso de iconos y paddings para evitar parpadeos visuales.
+ * Se añadió el parámetro userPhotoUrl para mostrar la imagen de Google.
  */
 @Composable
 fun MainLayout(
     title: String,
     showBackButton: Boolean = false,
+    userPhotoUrl: String? = null, // URL de la foto de Google
     onBackClick: () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
@@ -118,17 +120,16 @@ fun MainLayout(
             ) {
                 Row(
                     modifier = Modifier
-                        .statusBarsPadding() // Evita el notch
+                        .statusBarsPadding()
                         .height(56.dp)
-                        .padding(horizontal = 4.dp),
+                        .padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Contenedor de ancho fijo para el botón para que el título no salte
+                    // Botón Atrás
                     Box(modifier = Modifier.width(48.dp)) {
                         if (showBackButton) {
                             IconButton(onClick = onBackClick) {
                                 Icon(
-                                    // Usamos AutoMirrored para que la flecha apunte bien en todos los idiomas
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Back",
                                     tint = TextPrimary
@@ -137,12 +138,31 @@ fun MainLayout(
                         }
                     }
 
+                    // Título central/izquierdo
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleLarge,
                         color = TextPrimary,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier.weight(1f).padding(start = 8.dp)
                     )
+
+                    // Imagen de Perfil de Google (Derecha)
+                    if (userPhotoUrl != null) {
+                        // Por ahora mostramos un círculo con un emoji hasta que agregues
+                        // una librería de carga de imágenes como Kamel o Coil
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("👤", fontSize = 18.sp)
+                        }
+                    } else {
+                        // Espacio vacío para mantener el equilibrio visual
+                        Spacer(modifier = Modifier.width(36.dp))
+                    }
                 }
             }
         },

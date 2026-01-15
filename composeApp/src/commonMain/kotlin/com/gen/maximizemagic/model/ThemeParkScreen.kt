@@ -19,6 +19,7 @@ import com.gen.maximizemagic.ParkInfo
 @Composable
 fun ThemeParksScreen(
     parksMap: Map<String, ParkInfo>,
+    userPhotoUrl: String?, // Add this line
     onNavigateToDetail: (String, ParkInfo) -> Unit,
     onBack: () -> Unit
 ) {

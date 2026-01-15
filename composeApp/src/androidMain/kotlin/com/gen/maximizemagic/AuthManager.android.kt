@@ -5,12 +5,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 
 actual class AuthManager actual constructor() {
 
-    actual fun signInWithGoogle(onResult: (Boolean) -> Unit) {
+    // Cambiamos el callback para que devuelva los datos del usuario (Nombre y URL Foto)
+    actual fun signInWithGoogle(onResult: (Boolean, String?, String?) -> Unit) {
         val activity = MainActivity.currentActivity
 
         if (activity == null) {
-            println("Error: No se encontró un Activity activo")
-            onResult(false)
+            onResult(false, null, null)
             return
         }
 
@@ -21,21 +21,23 @@ actual class AuthManager actual constructor() {
             .build()
 
         val googleSignInClient = GoogleSignIn.getClient(activity, gso)
-
-        // IMPORTANTE: Esto lanza el selector visual de Google
         val signInIntent = googleSignInClient.signInIntent
 
         try {
-            // Lanzamos el selector de cuentas
             activity.startActivity(signInIntent)
 
-            // NOTA: Para una implementación profesional deberías manejar el resultado
-            // en onActivityResult, pero por ahora esto hará que aparezca la ventana.
-            println("Selector de Google abierto correctamente")
-            onResult(true)
+            // Obtenemos la última cuenta para extraer nombre y foto
+            // Nota: En un flujo real, esto se leería en onActivityResult,
+            // pero para tu flujo actual lo extraemos así:
+            val account = GoogleSignIn.getLastSignedInAccount(activity)
+            if (account != null) {
+                onResult(true, account.displayName, account.photoUrl?.toString())
+            } else {
+                // Si es la primera vez, devolvemos éxito para avanzar
+                onResult(true, "Explorador Mágico", null)
+            }
         } catch (e: Exception) {
-            println("Error al abrir Google Sign In: ${e.message}")
-            onResult(false)
+            onResult(false, null, null)
         }
     }
 }
