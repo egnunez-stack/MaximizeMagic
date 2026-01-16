@@ -49,4 +49,8 @@ class SettingsManager {
     var language: String
         get() = settings.getString("app_language", "es")
         set(value) { settings.set("app_language", value) }
+    // Agrega esto a tu SettingsManager.kt
+    var parkAgenda: String
+        get() = settings.getString("park_agenda", "") // Formato sugerido: "2024-12-24:Magic Kingdom|2024-12-25:Epcot"
+        set(value) { settings.set("park_agenda", value) }
 }
