@@ -2,10 +2,6 @@ package com.gen.maximizemagic.model
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -17,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gen.maximizemagic.MainLayout
 import kotlinx.datetime.*
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,9 +26,10 @@ fun AgendaScreen(
     // --- ESTADOS ---
     val datePickerState = rememberDatePickerState()
     var showParkSelector by remember { mutableStateOf(false) }
-    var selectedDateText by remember { mutableStateOf("") }
 
-    // Lista de parques (puedes pasarla por parámetro o tenerla aquí)
+    // Copia local para persistencia temporal
+    var tempAgenda by remember { mutableStateOf(settingsManager.parkAgenda) }
+
     val parksList = listOf(
         "Magic Kingdom", "Animal Kingdom", "Disney Hollywood Studios",
         "Epcot", "Universal Studios Florida", "Islands of Adventure", "Universal Epic Universe"
@@ -44,8 +40,18 @@ fun AgendaScreen(
     val dateString = if (millis != null) {
         val instant = Instant.fromEpochMilliseconds(millis)
         val date = instant.toLocalDateTime(TimeZone.UTC).date
-        date.toString() // YYYY-MM-DD
+        date.toString()
     } else ""
+
+    // Buscar parque guardado para la fecha
+    val parkForSelectedDate = remember(dateString, tempAgenda) {
+        if (dateString.isEmpty()) null
+        else {
+            tempAgenda.split("|")
+                .find { it.startsWith(dateString) }
+                ?.substringAfter(":")
+        }
+    }
 
     MainLayout(
         title = if (isEs) "Agenda de Parques" else "Park Schedule",
@@ -60,13 +66,7 @@ fun AgendaScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = if (isEs) "1. Selecciona un día" else "1. Select a day",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            // CALENDARIO (DatePicker)
+            // 1. CALENDARIO
             DatePicker(
                 state = datePickerState,
                 modifier = Modifier.weight(1f),
@@ -75,59 +75,94 @@ fun AgendaScreen(
                 showModeToggle = false
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // BOTÓN PARA SELECCIONAR PARQUE
-            Button(
-                onClick = {
-                    if (dateString.isNotEmpty()) {
-                        selectedDateText = dateString
-                        showParkSelector = true
+            // 2. INFO DEL DÍA
+            if (dateString.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(if (isEs) "Día: $dateString" else "Date: $dateString", style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            text = if (parkForSelectedDate != null)
+                                (if (isEs) "Parque: $parkForSelectedDate" else "Park: $parkForSelectedDate")
+                            else (if (isEs) "Sin parque asignado" else "No park assigned"),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
-                },
-                enabled = dateString.isNotEmpty(),
-                modifier = Modifier.fillMaxWidth().height(56.dp)
-            ) {
-                Text(if (isEs) "2. Elegir Parque para $dateString" else "2. Choose Park for $dateString")
+                }
+
+                Button(
+                    onClick = { showParkSelector = true },
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                ) {
+                    Text(if (isEs) "Seleccionar / Cambiar Parque" else "Select / Change Park")
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // BOTÓN CANCELAR (Vuelve atrás)
-            TextButton(
-                onClick = onBack,
-                modifier = Modifier.fillMaxWidth()
+            // 3. BOTONES DE GRABAR / CANCELAR
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(if (isEs) "Cancelar" else "Cancel")
+                OutlinedButton(
+                    onClick = onBack,
+                    modifier = Modifier.weight(1f).height(48.dp)
+                ) {
+                    Text(if (isEs) "Cancelar" else "Cancel")
+                }
+                Button(
+                    onClick = {
+                        settingsManager.parkAgenda = tempAgenda
+                        onBack()
+                    },
+                    modifier = Modifier.weight(1f).height(48.dp)
+                ) {
+                    Text(if (isEs) "Grabar" else "Save")
+                }
             }
         }
     }
 
-    // --- DIÁLOGO DE SELECCIÓN DE PARQUE ---
+    // --- DIÁLOGO DE SELECCIÓN ---
     if (showParkSelector) {
         AlertDialog(
             onDismissRequest = { showParkSelector = false },
-            title = { Text(if (isEs) "Seleccionar Parque" else "Select Park") },
+            title = { Text(if (isEs) "Elegir Parque" else "Choose Park") },
             text = {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column {
+                    // --- OPCIÓN PARA BORRAR (NULO) ---
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                if (isEs) "❌ Ninguno (Borrar)" else "❌ None (Delete)",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        },
+                        modifier = Modifier.clickable {
+                            // Eliminamos la entrada para esta fecha
+                            val list = tempAgenda.split("|")
+                                .filter { it.isNotEmpty() && !it.startsWith(dateString) }
+                            tempAgenda = list.joinToString("|")
+                            showParkSelector = false
+                        }
+                    )
+                    HorizontalDivider()
+
+                    // --- LISTA DE PARQUES ---
                     parksList.forEach { park ->
                         ListItem(
                             headlineContent = { Text(park) },
                             modifier = Modifier.clickable {
-                                // GUARDAR LÓGICA: "fecha:parque"
-                                val currentAgenda = settingsManager.parkAgenda
-                                val newEntry = "$selectedDateText:$park"
-
-                                // Evitar duplicados de fecha (limpiar si ya existe esa fecha)
-                                val filteredAgenda = currentAgenda.split("|")
-                                    .filter { it.isNotEmpty() && !it.startsWith(selectedDateText) }
+                                val list = tempAgenda.split("|")
+                                    .filter { it.isNotEmpty() && !it.startsWith(dateString) }
                                     .toMutableList()
-
-                                filteredAgenda.add(newEntry)
-                                settingsManager.parkAgenda = filteredAgenda.joinToString("|")
-
+                                list.add("$dateString:$park")
+                                tempAgenda = list.joinToString("|")
                                 showParkSelector = false
-                                onBack() // Volver tras grabar
                             }
                         )
                     }
