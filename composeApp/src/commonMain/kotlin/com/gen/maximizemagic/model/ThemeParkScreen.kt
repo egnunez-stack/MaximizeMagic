@@ -1,14 +1,18 @@
 package com.gen.maximizemagic.model
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,8 +27,9 @@ import com.gen.maximizemagic.network.OrlandoWeather
 fun ThemeParksScreen(
     parksMap: Map<String, ParkInfo>,
     userPhotoUrl: String?,
-    weatherInfoFromApp: OrlandoWeather?, // Recibimos el clima desde App.kt
+    weatherInfoFromApp: OrlandoWeather?,
     onNavigateToDetail: (String, ParkInfo) -> Unit,
+    onNavigateToSettings: () -> Unit,
     onBack: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -32,12 +37,10 @@ fun ThemeParksScreen(
     val selectedInfo = parksMap[selectedParkName]
     val uriHandler = LocalUriHandler.current
 
-    // --- LÓGICA DEL CLIMA ---
     val api = remember { ParkApi() }
     var weather by remember { mutableStateOf(weatherInfoFromApp) }
     var isLoadingWeather by remember { mutableStateOf(weather == null) }
 
-    // Si no vino precargado, lo buscamos
     LaunchedEffect(Unit) {
         if (weather == null) {
             isLoadingWeather = true
@@ -62,7 +65,7 @@ fun ThemeParksScreen(
             ) {
                 Row(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
                         .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
@@ -157,6 +160,32 @@ fun ThemeParksScreen(
                         onClick = { onNavigateToDetail(selectedParkName, info) },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("🎢 Ver Tiempos de Espera") }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // --- BOTÓN DE CONFIGURACIÓN AMPLIADO (Abajo a la izquierda) ---
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.Start) // Alineado a la izquierda
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onNavigateToSettings() }
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Configuración",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(30.dp) // Aumentado de 24dp a 30dp (~25%)
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = "Configuración",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 18.sp, // Aumentado ligeramente para mantener proporción
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }

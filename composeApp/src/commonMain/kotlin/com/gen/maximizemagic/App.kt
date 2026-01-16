@@ -1,8 +1,6 @@
 package com.gen.maximizemagic
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -16,7 +14,6 @@ import com.gen.maximizemagic.ui.MaximizeMagicScreen
 import com.gen.maximizemagic.network.ParkApi
 import com.gen.maximizemagic.network.OrlandoWeather
 
-// --- 1. DEFINICIÓN DE CLASE DE DATOS ---
 data class ParkInfo(
     val id: String,
     val openingHours: String,
@@ -24,7 +21,8 @@ data class ParkInfo(
     val tollPlazaCoords: String
 )
 
-enum class Screen { Welcome, Parks, Detail }
+// AÑADIMOS: Screen.Settings
+enum class Screen { Welcome, Parks, Detail, Settings }
 
 @Composable
 fun App() {
@@ -34,14 +32,11 @@ fun App() {
     var showWelcomeMessage by remember { mutableStateOf(false) }
     var selectedParkId by remember { mutableStateOf("") }
     var selectedParkName by remember { mutableStateOf("") }
-
-    // CORRECCIÓN: Usamos OrlandoWeather en lugar de DayData
     var orlandoWeather by remember { mutableStateOf<OrlandoWeather?>(null) }
 
     val authManager = remember { AuthManager() }
     val api = remember { ParkApi() }
 
-    // Cargar clima al iniciar o al conectar
     LaunchedEffect(Unit) {
         orlandoWeather = api.getOrlandoFullWeather()
     }
@@ -87,12 +82,14 @@ fun App() {
                     ThemeParksScreen(
                         parksMap = parksData,
                         userPhotoUrl = userPhotoUrl,
-                        weatherInfoFromApp = orlandoWeather, // Pasamos el clima precargado
+                        weatherInfoFromApp = orlandoWeather,
                         onNavigateToDetail = { name: String, info: ParkInfo ->
                             selectedParkName = name
                             selectedParkId = info.id
                             currentScreen = Screen.Detail
                         },
+                        // AÑADIMOS: Navegación a Configuración
+                        onNavigateToSettings = { currentScreen = Screen.Settings },
                         onBack = { currentScreen = Screen.Welcome }
                     )
                 }
@@ -100,7 +97,14 @@ fun App() {
                     ParkDetailScreen(
                         parkId = selectedParkId,
                         parkName = selectedParkName,
-                        userPhotoUrl = userPhotoUrl, // Mantiene la foto en el detalle
+                        userPhotoUrl = userPhotoUrl,
+                        onBack = { currentScreen = Screen.Parks }
+                    )
+                }
+                // NUEVA PANTALLA: Settings
+                Screen.Settings -> {
+                    SettingsScreen(
+                        userPhotoUrl = userPhotoUrl,
                         onBack = { currentScreen = Screen.Parks }
                     )
                 }
