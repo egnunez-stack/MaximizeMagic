@@ -52,6 +52,8 @@ kotlin {
             implementation("media.kamel:kamel-image:0.9.0")
 
             implementation("com.russhwolf:multiplatform-settings-no-arg:1.1.1")
+
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
         }
 
         // --- DEPENDENCIAS EXCLUSIVAS DE ANDROID ---
