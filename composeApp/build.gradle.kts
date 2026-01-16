@@ -50,6 +50,8 @@ kotlin {
             implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
 
             implementation("media.kamel:kamel-image:0.9.0")
+
+            implementation("com.russhwolf:multiplatform-settings-no-arg:1.1.1")
         }
 
         // --- DEPENDENCIAS EXCLUSIVAS DE ANDROID ---

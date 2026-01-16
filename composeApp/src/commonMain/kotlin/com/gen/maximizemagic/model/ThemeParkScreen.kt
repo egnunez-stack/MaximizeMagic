@@ -32,8 +32,34 @@ fun ThemeParksScreen(
     onNavigateToSettings: () -> Unit,
     onBack: () -> Unit
 ) {
+    // 1. Cargamos el gestor de configuración para saber el idioma
+    val settingsManager = remember { SettingsManager() }
+    val isEs = settingsManager.language == "es"
+
+    // --- ESTADO PARA EL DIÁLOGO DE SALIDA ---
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    // 2. DICCIONARIO DE TEXTOS
+    val txtTitle = if (isEs) "Salir" else "Exit"
+    val txtHeader = if (isEs) "Planifica tu Visita" else "Plan your Visit"
+    val txtSelect = if (isEs) "Seleccione un Parque" else "Select a Park"
+    val txtHours = if (isEs) "🕒 Horarios de Hoy" else "🕒 Today's Hours"
+    val txtOpen = if (isEs) "Apertura" else "Open"
+    val txtClose = if (isEs) "Cierre" else "Close"
+    val txtMaps = if (isEs) "🚗 Ir a la Toll Plaza (Mapa)" else "🚗 Go to Toll Plaza (Map)"
+    val txtWaitTimes = if (isEs) "🎢 Ver Tiempos de Espera" else "🎢 View Wait Times"
+    val txtSettings = if (isEs) "Configuración" else "Settings"
+    val txtLoadingWeather = if (isEs) "Cargando clima..." else "Loading weather..."
+    val txtRain = if (isEs) "Lluvia probable" else "Rain likely"
+    val txtClear = if (isEs) "Despejado" else "Clear"
+
+    // Textos específicos del diálogo de salida
+    val txtExitQuestion = if (isEs) "¿Desea salir?" else "Do you want to exit?"
+    val txtConfirm = if (isEs) "Sí" else "Yes"
+    val txtCancel = if (isEs) "No" else "No"
+
     var expanded by remember { mutableStateOf(false) }
-    var selectedParkName by remember { mutableStateOf("Seleccione un Parque") }
+    var selectedParkName by remember { mutableStateOf(txtSelect) }
     val selectedInfo = parksMap[selectedParkName]
     val uriHandler = LocalUriHandler.current
 
@@ -50,9 +76,10 @@ fun ThemeParksScreen(
     }
 
     MainLayout(
-        title = "Explorar",
+        title = txtTitle,
         showBackButton = true,
-        onBackClick = onBack,
+        // Al hacer click, en lugar de volver, mostramos el diálogo
+        onBackClick = { showExitDialog = true },
         userPhotoUrl = userPhotoUrl
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
@@ -73,11 +100,11 @@ fun ThemeParksScreen(
                     if (isLoadingWeather) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         Spacer(Modifier.width(8.dp))
-                        Text("Cargando clima...", style = MaterialTheme.typography.labelLarge)
+                        Text(txtLoadingWeather, style = MaterialTheme.typography.labelLarge)
                     } else if (weather != null) {
                         val info = weather!!
                         val rainIcon = if (info.rainChance > 30) "🌧️" else "☀️"
-                        val rainText = if (info.rainChance > 30) "Lluvia probable" else "Despejado"
+                        val rainText = if (info.rainChance > 30) txtRain else txtClear
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
@@ -92,7 +119,7 @@ fun ThemeParksScreen(
                             )
                         }
                     } else {
-                        Text("⚠️ Clima no disponible", style = MaterialTheme.typography.labelLarge)
+                        Text("⚠️", style = MaterialTheme.typography.labelLarge)
                     }
                 }
             }
@@ -104,7 +131,7 @@ fun ThemeParksScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Planifica tu Visita",
+                    text = txtHeader,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -146,28 +173,28 @@ fun ThemeParksScreen(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         Column(Modifier.padding(16.dp)) {
-                            Text("🕒 Horarios de Hoy", fontWeight = FontWeight.Bold)
-                            Text("Apertura: ${info.openingHours} | Cierre: ${info.closingHours}")
+                            Text(txtHours, fontWeight = FontWeight.Bold)
+                            Text("$txtOpen: ${info.openingHours} | $txtClose: ${info.closingHours}")
                         }
                     }
                     Spacer(Modifier.height(24.dp))
                     Button(
                         onClick = { uriHandler.openUri("https://www.google.com/maps/search/?api=1&query=${info.tollPlazaCoords}") },
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("🚗 Ir a la Toll Plaza (Mapa)") }
+                    ) { Text(txtMaps) }
 
                     OutlinedButton(
                         onClick = { onNavigateToDetail(selectedParkName, info) },
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("🎢 Ver Tiempos de Espera") }
+                    ) { Text(txtWaitTimes) }
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // --- BOTÓN DE CONFIGURACIÓN AMPLIADO (Abajo a la izquierda) ---
+                // --- BOTÓN DE CONFIGURACIÓN AMPLIADO ---
                 Row(
                     modifier = Modifier
-                        .align(Alignment.Start) // Alineado a la izquierda
+                        .align(Alignment.Start)
                         .clip(RoundedCornerShape(12.dp))
                         .clickable { onNavigateToSettings() }
                         .padding(8.dp),
@@ -175,19 +202,49 @@ fun ThemeParksScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
-                        contentDescription = "Configuración",
+                        contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(30.dp) // Aumentado de 24dp a 30dp (~25%)
+                        modifier = Modifier.size(30.dp)
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text = "Configuración",
+                        text = txtSettings,
                         color = MaterialTheme.colorScheme.primary,
-                        fontSize = 18.sp, // Aumentado ligeramente para mantener proporción
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
             }
         }
+    }
+
+    // --- DIÁLOGO DE CONFIRMACIÓN DE SALIDA ---
+    if (showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitDialog = false },
+            title = {
+                Text(text = txtTitle, fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(text = txtExitQuestion)
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExitDialog = false
+                        onBack() // Navega hacia atrás
+                    }
+                ) {
+                    Text(txtConfirm)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showExitDialog = false }
+                ) {
+                    Text(txtCancel)
+                }
+            }
+        )
     }
 }

@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalUriHandler
@@ -29,13 +30,27 @@ import com.gen.maximizemagic.network.*
 fun ParkDetailScreen(
     parkId: String,
     parkName: String,
-    userPhotoUrl: String?, // 1. AGREGAMOS EL PARÁMETRO AQUÍ
+    userPhotoUrl: String?,
     onBack: () -> Unit
 ) {
     val api = remember { ParkApi() }
     var parkData by remember { mutableStateOf<QueueTimesResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     val uriHandler = LocalUriHandler.current
+
+    // --- LÓGICA DE IDIOMA ---
+    val settingsManager = remember { SettingsManager() }
+    val isEs = settingsManager.language == "es"
+
+    // Diccionario de traducciones
+    val txtSearch = if (isEs) "Buscar atracción..." else "Search attraction..."
+    val txtHideClosed = if (isEs) "Ocultar cerradas" else "Hide closed"
+    val txtSortWait = if (isEs) "Más espera primero" else "Wait time: High to Low"
+    val txtNoData = if (isEs) "No hay datos disponibles." else "No data available."
+    val txtWaitMin = if (isEs) "min" else "min"
+    val txtClosed = if (isEs) "Cerrado" else "Closed"
+    val txtMagicRec = if (isEs) "✨ Recomendación Mágica" else "✨ Magic Recommendation"
+    val txtGoNow = if (isEs) "¡Ve ahora!" else "Go now!"
 
     // --- ESTADOS DE FILTRO Y ORDEN ---
     var searchQuery by remember { mutableStateOf("") }
@@ -45,7 +60,6 @@ fun ParkDetailScreen(
     LaunchedEffect(parkId) {
         try {
             isLoading = true
-            // BIFURCACIÓN DE API: Si es Epic, usamos Themeparks.wiki
             parkData = if (parkName.contains("Epic", ignoreCase = true)) {
                 api.getEpicUniverseData()
             } else {
@@ -56,36 +70,39 @@ fun ParkDetailScreen(
         }
     }
 
-    // 2. PASAMOS userPhotoUrl AL MainLayout
     MainLayout(
         title = parkName,
         showBackButton = true,
         onBackClick = onBack,
-        userPhotoUrl = userPhotoUrl // <--- ESTO ACTIVA LA FOTO EN LA TOP BAR
+        userPhotoUrl = userPhotoUrl
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
 
-            // --- BARRA DE BÚSQUEDA Y FILTROS ---
+            // --- BARRA DE BÚSQUEDA Y FILTROS (TRADUCIDA) ---
             Surface(tonalElevation = 2.dp, shadowElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
                         modifier = Modifier.fillMaxWidth().height(52.dp),
-                        placeholder = { Text("Buscar atracción...", fontSize = 14.sp) },
+                        placeholder = { Text(txtSearch, fontSize = 14.sp) },
                         leadingIcon = { Icon(Icons.Default.Search, null, Modifier.size(20.dp)) },
                         singleLine = true,
                         shape = MaterialTheme.shapes.medium
                     )
 
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(hideClosed, { hideClosed = it }, Modifier.scale(0.8f))
-                            Text("Ocultar cerradas", style = MaterialTheme.typography.bodySmall)
+                            Checkbox(checked = hideClosed, onCheckedChange = { hideClosed = it })
+                            Text(txtHideClosed, style = MaterialTheme.typography.bodySmall) // TRADUCIDO
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(sortByWaitTime, { sortByWaitTime = it }, Modifier.scale(0.8f))
-                            Text("Más espera primero", style = MaterialTheme.typography.bodySmall)
+                            Checkbox(checked = sortByWaitTime, onCheckedChange = { sortByWaitTime = it })
+                            Text(txtSortWait, style = MaterialTheme.typography.bodySmall) // TRADUCIDO
                         }
                     }
                 }
@@ -95,19 +112,40 @@ fun ParkDetailScreen(
                 Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
             } else if (parkData == null || (parkData?.lands?.isEmpty() == true && parkData?.rides?.isEmpty() == true)) {
                 Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    Text(
-                        if (parkName.contains("Epic")) "Epic Universe abre en Mayo 2025.\n¡Pronto verás los tiempos aquí!"
-                        else "No hay datos disponibles.",
-                        textAlign = TextAlign.Center
-                    )
+                    Text(txtNoData, textAlign = TextAlign.Center)
                 }
             } else {
-                val allRides = (parkData!!.rides + parkData!!.lands.flatMap { it.rides }).filter {
-                    it.name.contains(searchQuery, true) && (if (hideClosed) it.is_open else true)
+                val allRidesRaw = (parkData!!.rides + parkData!!.lands.flatMap { it.rides })
+                val allFilteredRides = allRidesRaw.filter { ride ->
+                    val matchesSearch = ride.name.contains(searchQuery, ignoreCase = true)
+                    val matchesOpen = if (hideClosed) ride.is_open else true
+                    matchesSearch && matchesOpen
                 }.let { if (sortByWaitTime) it.sortedByDescending { r -> r.wait_time } else it }
 
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(allRides) { RideRow(it) { /* Lógica de Google Maps aquí si deseas */ } }
+                    // Recomendación Mágica
+                    if (searchQuery.isEmpty() && !sortByWaitTime) {
+                        val recommendation = allRidesRaw.filter { it.is_open && it.wait_time > 0 }.minByOrNull { it.wait_time }
+                        if (recommendation != null) {
+                            item {
+                                Card(
+                                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9C4))
+                                ) {
+                                    Column(Modifier.padding(16.dp)) {
+                                        Text(txtMagicRec, fontWeight = FontWeight.Bold, color = Color(0xFFFBC02D))
+                                        Text("${recommendation.name} $txtGoNow", style = MaterialTheme.typography.titleMedium)
+                                        Text("${recommendation.wait_time} $txtWaitMin", fontWeight = FontWeight.ExtraBold)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    items(allFilteredRides) { attraction ->
+                        RideRow(attraction, txtWaitMin, txtClosed)
+                        HorizontalDivider(thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                    }
                 }
             }
         }
@@ -115,21 +153,15 @@ fun ParkDetailScreen(
 }
 
 @Composable
-fun RideRow(attraction: AttractionAlternative, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+fun RideRow(attraction: AttractionAlternative, waitSuffix: String, closedText: String) {
+    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(attraction.name, style = MaterialTheme.typography.bodyLarge)
         }
         Text(
-            if (attraction.is_open) "${attraction.wait_time} min" else "Cerrado",
+            text = if (attraction.is_open) "${attraction.wait_time} $waitSuffix" else closedText,
             fontWeight = FontWeight.Bold,
             color = if (attraction.is_open) Color(0xFF4CAF50) else Color.Gray
         )
     }
 }
-
-@Composable
-fun Modifier.scale(scale: Float): Modifier = this.then(Modifier.layout { m, c ->
-    val p = m.measure(c)
-    layout(p.width, p.height) { p.placeWithLayer(0, 0) { scaleX = scale; scaleY = scale } }
-})
