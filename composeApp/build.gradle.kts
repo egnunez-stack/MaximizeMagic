@@ -48,6 +48,8 @@ kotlin {
             implementation("io.ktor:ktor-client-core:2.3.12")
             implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
             implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
+
+            implementation("media.kamel:kamel-image:0.9.0")
         }
 
         // --- DEPENDENCIAS EXCLUSIVAS DE ANDROID ---

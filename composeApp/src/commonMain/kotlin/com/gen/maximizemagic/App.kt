@@ -73,7 +73,6 @@ fun App() {
                         onConnectClick = {
                             println("#MaximizeMagic: Botón Conectar presionado")
                             authManager.signInWithGoogle { success, name, photo ->
-                                // LOG CRÍTICO: Aquí veremos qué devuelve Android
                                 println("#MaximizeMagic: Auth Callback -> Exito: $success, Nombre: $name, Foto: $photo")
 
                                 if (success) {
@@ -81,7 +80,6 @@ fun App() {
                                     userPhotoUrl = photo
                                     showWelcomeMessage = true
                                     currentScreen = Screen.Parks
-                                    println("#MaximizeMagic: Estados actualizados. Navegando a Parks")
                                 } else {
                                     println("#MaximizeMagic: Error en la autenticación")
                                 }
@@ -93,7 +91,7 @@ fun App() {
                 Screen.Parks -> {
                     ThemeParksScreen(
                         parksMap = parksData,
-                        userPhotoUrl = userPhotoUrl, // Se pasa el estado a la pantalla
+                        userPhotoUrl = userPhotoUrl, // Pasa la foto a la barra superior
                         onNavigateToDetail = { name, info ->
                             selectedParkName = name
                             selectedParkId = info.id
@@ -108,6 +106,7 @@ fun App() {
                     ParkDetailScreen(
                         parkId = selectedParkId,
                         parkName = selectedParkName,
+                        userPhotoUrl = userPhotoUrl, // CORRECCIÓN: Pasa la foto también aquí
                         onBack = {
                             currentScreen = Screen.Parks
                         }
@@ -117,7 +116,6 @@ fun App() {
 
             // Cartel de bienvenida flotante
             if (showWelcomeMessage) {
-                println("#MaximizeMagic: Dibujando cartel de bienvenida para: $userName")
                 Card(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
