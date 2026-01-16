@@ -21,8 +21,7 @@ data class ParkInfo(
     val tollPlazaCoords: String
 )
 
-// AÑADIMOS: Screen.Settings
-enum class Screen { Welcome, Parks, Detail, Settings }
+enum class Screen { Welcome, Parks, Detail, Settings, Agenda } // AÑADIDO: Agenda
 
 @Composable
 fun App() {
@@ -88,7 +87,6 @@ fun App() {
                             selectedParkId = info.id
                             currentScreen = Screen.Detail
                         },
-                        // AÑADIMOS: Navegación a Configuración
                         onNavigateToSettings = { currentScreen = Screen.Settings },
                         onBack = { currentScreen = Screen.Welcome }
                     )
@@ -101,11 +99,17 @@ fun App() {
                         onBack = { currentScreen = Screen.Parks }
                     )
                 }
-                // NUEVA PANTALLA: Settings
                 Screen.Settings -> {
                     SettingsScreen(
                         userPhotoUrl = userPhotoUrl,
+                        onNavigateToAgenda = { currentScreen = Screen.Agenda }, // CALLBACK AÑADIDO
                         onBack = { currentScreen = Screen.Parks }
+                    )
+                }
+                Screen.Agenda -> { // NUEVA PANTALLA
+                    AgendaScreen(
+                        userPhotoUrl = userPhotoUrl,
+                        onBack = { currentScreen = Screen.Settings }
                     )
                 }
             }
