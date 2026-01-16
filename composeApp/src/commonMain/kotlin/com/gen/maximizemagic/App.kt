@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.gen.maximizemagic.model.*
 import com.gen.maximizemagic.ui.MaximizeMagicScreen
+import com.gen.maximizemagic.network.ParkApi
+import com.gen.maximizemagic.network.OrlandoWeather
 
 // --- 1. DEFINICIÓN DE CLASE DE DATOS ---
 data class ParkInfo(
@@ -22,28 +24,35 @@ data class ParkInfo(
     val tollPlazaCoords: String
 )
 
-// Definición de las pantallas disponibles
-enum class Screen {
-    Welcome,
-    Parks,
-    Detail
-}
+enum class Screen { Welcome, Parks, Detail }
 
 @Composable
 fun App() {
-    // Estados de navegación y usuario
     var currentScreen by remember { mutableStateOf(Screen.Welcome) }
     var userName by remember { mutableStateOf("") }
     var userPhotoUrl by remember { mutableStateOf<String?>(null) }
     var showWelcomeMessage by remember { mutableStateOf(false) }
-
-    // Estados para la selección de parque
     var selectedParkId by remember { mutableStateOf("") }
     var selectedParkName by remember { mutableStateOf("") }
 
-    val authManager = remember { AuthManager() }
+    // CORRECCIÓN: Usamos OrlandoWeather en lugar de DayData
+    var orlandoWeather by remember { mutableStateOf<OrlandoWeather?>(null) }
 
-    // Datos de los parques (Orlando)
+    val authManager = remember { AuthManager() }
+    val api = remember { ParkApi() }
+
+    // Cargar clima al iniciar o al conectar
+    LaunchedEffect(Unit) {
+        orlandoWeather = api.getOrlandoFullWeather()
+    }
+
+    LaunchedEffect(showWelcomeMessage) {
+        if (showWelcomeMessage) {
+            delay(5000)
+            showWelcomeMessage = false
+        }
+    }
+
     val parksData = remember {
         mapOf(
             "Magic Kingdom" to ParkInfo("6", "09:00", "23:00", "28.405,-81.579"),
@@ -56,32 +65,18 @@ fun App() {
         )
     }
 
-    // Efecto para cerrar el cartel de bienvenida automáticamente tras 5 segundos
-    LaunchedEffect(showWelcomeMessage) {
-        if (showWelcomeMessage) {
-            println("#MaximizeMagic: Iniciando contador de 5 segundos para bienvenida")
-            delay(5000)
-            showWelcomeMessage = false
-        }
-    }
-
     MaterialTheme {
         Box(modifier = Modifier.fillMaxSize()) {
             when (currentScreen) {
                 Screen.Welcome -> {
                     MaximizeMagicScreen(
                         onConnectClick = {
-                            println("#MaximizeMagic: Botón Conectar presionado")
                             authManager.signInWithGoogle { success, name, photo ->
-                                println("#MaximizeMagic: Auth Callback -> Exito: $success, Nombre: $name, Foto: $photo")
-
                                 if (success) {
-                                    userName = name ?: "Usuario de Google"
+                                    userName = name ?: "Usuario"
                                     userPhotoUrl = photo
                                     showWelcomeMessage = true
                                     currentScreen = Screen.Parks
-                                } else {
-                                    println("#MaximizeMagic: Error en la autenticación")
                                 }
                             }
                         },
@@ -91,46 +86,33 @@ fun App() {
                 Screen.Parks -> {
                     ThemeParksScreen(
                         parksMap = parksData,
-                        userPhotoUrl = userPhotoUrl, // Pasa la foto a la barra superior
-                        onNavigateToDetail = { name, info ->
+                        userPhotoUrl = userPhotoUrl,
+                        weatherInfoFromApp = orlandoWeather, // Pasamos el clima precargado
+                        onNavigateToDetail = { name: String, info: ParkInfo ->
                             selectedParkName = name
                             selectedParkId = info.id
                             currentScreen = Screen.Detail
                         },
-                        onBack = {
-                            currentScreen = Screen.Welcome
-                        }
+                        onBack = { currentScreen = Screen.Welcome }
                     )
                 }
                 Screen.Detail -> {
                     ParkDetailScreen(
                         parkId = selectedParkId,
                         parkName = selectedParkName,
-                        userPhotoUrl = userPhotoUrl, // CORRECCIÓN: Pasa la foto también aquí
-                        onBack = {
-                            currentScreen = Screen.Parks
-                        }
+                        userPhotoUrl = userPhotoUrl, // Mantiene la foto en el detalle
+                        onBack = { currentScreen = Screen.Parks }
                     )
                 }
             }
 
-            // Cartel de bienvenida flotante
             if (showWelcomeMessage) {
                 Card(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 100.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ),
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                     elevation = CardDefaults.cardElevation(8.dp)
                 ) {
-                    Text(
-                        "¡Bienvenido, $userName! ✨",
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Text("¡Bienvenido, $userName! ✨", modifier = Modifier.padding(16.dp))
                 }
             }
         }
