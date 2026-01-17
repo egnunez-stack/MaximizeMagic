@@ -21,7 +21,7 @@ data class ParkInfo(
     val tollPlazaCoords: String
 )
 
-enum class Screen { Welcome, Parks, Detail, Settings, Agenda } // AÑADIDO: Agenda
+enum class Screen { Welcome, Parks, Detail, Settings, Agenda }
 
 @Composable
 fun App() {
@@ -35,6 +35,8 @@ fun App() {
 
     val authManager = remember { AuthManager() }
     val api = remember { ParkApi() }
+    val settingsManager = remember { SettingsManager() }
+    val isEs = settingsManager.language == "es"
 
     LaunchedEffect(Unit) {
         orlandoWeather = api.getOrlandoFullWeather()
@@ -42,7 +44,7 @@ fun App() {
 
     LaunchedEffect(showWelcomeMessage) {
         if (showWelcomeMessage) {
-            delay(5000)
+            delay(4000) // 4 segundos como pediste anteriormente
             showWelcomeMessage = false
         }
     }
@@ -64,10 +66,20 @@ fun App() {
             when (currentScreen) {
                 Screen.Welcome -> {
                     MaximizeMagicScreen(
-                        onConnectClick = {
+                        onConnectGoogleClick = {
                             authManager.signInWithGoogle { success, name, photo ->
                                 if (success) {
-                                    userName = name ?: "Usuario"
+                                    userName = name ?: (if (isEs) "Usuario" else "User")
+                                    userPhotoUrl = photo
+                                    showWelcomeMessage = true
+                                    currentScreen = Screen.Parks
+                                }
+                            }
+                        },
+                        onConnectFacebookClick = { // NUEVA FUNCIONALIDAD
+                            authManager.signInWithFacebook { success, name, photo ->
+                                if (success) {
+                                    userName = name ?: (if (isEs) "Usuario" else "User")
                                     userPhotoUrl = photo
                                     showWelcomeMessage = true
                                     currentScreen = Screen.Parks
@@ -102,11 +114,11 @@ fun App() {
                 Screen.Settings -> {
                     SettingsScreen(
                         userPhotoUrl = userPhotoUrl,
-                        onNavigateToAgenda = { currentScreen = Screen.Agenda }, // CALLBACK AÑADIDO
+                        onNavigateToAgenda = { currentScreen = Screen.Agenda },
                         onBack = { currentScreen = Screen.Parks }
                     )
                 }
-                Screen.Agenda -> { // NUEVA PANTALLA
+                Screen.Agenda -> {
                     AgendaScreen(
                         userPhotoUrl = userPhotoUrl,
                         onBack = { currentScreen = Screen.Settings }
@@ -115,12 +127,13 @@ fun App() {
             }
 
             if (showWelcomeMessage) {
+                val welcomePrefix = if (isEs) "¡Bienvenido" else "Welcome"
                 Card(
                     modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                     elevation = CardDefaults.cardElevation(8.dp)
                 ) {
-                    Text("¡Bienvenido, $userName! ✨", modifier = Modifier.padding(16.dp))
+                    Text("$welcomePrefix, $userName! ✨", modifier = Modifier.padding(16.dp))
                 }
             }
         }

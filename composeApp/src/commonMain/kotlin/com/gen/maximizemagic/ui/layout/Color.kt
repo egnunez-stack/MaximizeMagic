@@ -4,6 +4,10 @@ import androidx.compose.ui.graphics.Color
 
 val CelesteMain = Color(0xFFB3E5FC)
 
+val FacebookBlue = Color(0xFF1877F2)
+
+val OnFacebookText = Color(0xFFFFFFFF)
+
 val MaximizeMagicCelesteBg = Color(0xFFE3F2FD)
 val AmarilloSoft = Color(0xFFFFF9C4)
 val VerdePastel = Color(0xFFC8E6C9)

@@ -23,8 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gen.maximizemagic.MainLayout
 import com.gen.maximizemagic.network.*
+import com.gen.maximizemagic.ui.MainLayout
+import com.gen.maximizemagic.ui.layout.MainLayout
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

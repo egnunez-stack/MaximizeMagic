@@ -5,17 +5,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.facebook.CallbackManager // Importante para Facebook
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 
 class MainActivity : ComponentActivity() {
 
     companion object {
-        // Referencia al activity actual para que AuthManager pueda lanzar el Intent
+        // Referencia al activity actual para que AuthManager pueda lanzar los Intent
         var currentActivity: ComponentActivity? = null
 
         // Callback que será ejecutado en App.kt tras la respuesta de Google
         var authCallback: ((Boolean, String?, String?) -> Unit)? = null
+
+        // Gestor de respuestas de Facebook (se usa en AuthManager.android.kt)
+        var facebookCallbackManager: CallbackManager? = null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,46 +35,44 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Esta función captura la respuesta del selector de cuentas de Google.
+     * Esta función captura la respuesta tanto de Google como de Facebook.
      */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        // El código 1 es el que definimos en el AuthManager.android.kt
+        // 1. Manejo de respuesta de Google (Código 1 definido en AuthManager)
         if (requestCode == 1) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
-                // Obtenemos la cuenta de forma exitosa
                 val account = task.getResult(ApiException::class.java)
+                println("#MaximizeMagic: Google OK -> ${account?.displayName}")
 
-                println("#MaximizeMagic: Cuenta elegida correctamente -> ${account?.displayName}")
-
-                // Devolvemos los datos a App.kt: Exito, Nombre, URL de Foto
                 authCallback?.invoke(
                     true,
                     account?.displayName,
                     account?.photoUrl?.toString()
                 )
-
             } catch (e: ApiException) {
-                // El error 10 (DEVELOPER_ERROR) se captura aquí si el SHA-1 está mal configurado
-                println("#MaximizeMagic: Error de Google API (Código ${e.statusCode}): ${e.message}")
+                println("#MaximizeMagic: Error Google API (${e.statusCode}): ${e.message}")
                 authCallback?.invoke(false, null, null)
-
             } catch (e: Exception) {
-                // Otros errores (ej. el usuario cerró la ventana sin elegir cuenta)
-                println("#MaximizeMagic: Inicio de sesión cancelado o fallido: ${e.message}")
+                println("#MaximizeMagic: Google fallido: ${e.message}")
                 authCallback?.invoke(false, null, null)
             }
         }
+
+        // 2. Manejo de respuesta de Facebook
+        // Esto permite que el CallbackManager procese el resultado y lo mande al AuthManager
+        facebookCallbackManager?.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Limpiamos las referencias para evitar fugas de memoria
+        // Limpiamos todas las referencias para evitar fugas de memoria
         if (currentActivity == this) {
             currentActivity = null
         }
         authCallback = null
+        facebookCallbackManager = null
     }
 }

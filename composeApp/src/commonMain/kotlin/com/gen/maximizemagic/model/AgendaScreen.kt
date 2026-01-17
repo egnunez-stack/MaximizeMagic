@@ -11,7 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gen.maximizemagic.MainLayout
+import com.gen.maximizemagic.ui.MainLayout
+import com.gen.maximizemagic.ui.layout.MainLayout
 import kotlinx.datetime.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,12 +54,14 @@ fun AgendaScreen(
         }
     }
 
-    MainLayout(
-        title = if (isEs) "Agenda de Parques" else "Park Schedule",
-        showBackButton = true,
-        onBackClick = onBack,
-        userPhotoUrl = userPhotoUrl
-    ) { paddingValues ->
+
+        // ... dentro de AgendaScreen ...
+        MainLayout(
+            title = if (isEs) "Agenda de Parques" else "Park Schedule",
+            showBackButton = true,
+            onBackClick = onBack,
+            userPhotoUrl = userPhotoUrl // <--- Ahora el compilador ya no dará error
+        ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()

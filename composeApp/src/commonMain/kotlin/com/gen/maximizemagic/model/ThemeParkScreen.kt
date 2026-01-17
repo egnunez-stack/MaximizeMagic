@@ -1,15 +1,26 @@
 package com.gen.maximizemagic.model
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,11 +29,11 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gen.maximizemagic.MainLayout
 import com.gen.maximizemagic.ParkInfo
 import com.gen.maximizemagic.network.ParkApi
 import com.gen.maximizemagic.network.OrlandoWeather
-import kotlinx.datetime.* // Necesario para obtener la fecha de hoy
+import com.gen.maximizemagic.ui.layout.MainLayout
+import kotlinx.datetime.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +60,7 @@ fun ThemeParksScreen(
     val txtSettings = if (isEs) "Configuración" else "Settings"
     val txtRain = if (isEs) "Lluvia" else "Rain"
     val txtRoute = if (isEs) "🚗 De casa al parque" else "🚗 From home to park"
+    val txtLocation = if (isEs) "📍 Orlando, Florida" else "📍 Orlando, Florida"
 
     // --- ESTADO DE SELECCIÓN ---
     var selectedParkName by remember { mutableStateOf(txtSelect) }
@@ -56,27 +68,18 @@ fun ThemeParksScreen(
     // --- LÓGICA DE AUTO-SELECCIÓN POR AGENDA ---
     LaunchedEffect(Unit) {
         try {
-            // 1. Obtener fecha de hoy en formato YYYY-MM-DD
             val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-
-            // 2. Leer la agenda (Formato "2024-12-24:Epcot|...")
             val agenda = settingsManager.parkAgenda
-
             if (agenda.isNotEmpty()) {
-                // 3. Buscar si hay una entrada para hoy
                 val entryToday = agenda.split("|").find { it.startsWith(today) }
-
                 if (entryToday != null) {
                     val parkNameFromAgenda = entryToday.substringAfter(":")
-                    // 4. Validar que el parque de la agenda exista en nuestro mapa de datos
                     if (parksMap.containsKey(parkNameFromAgenda)) {
                         selectedParkName = parkNameFromAgenda
                     }
                 }
             }
-        } catch (e: Exception) {
-            // Error silencioso si falla el parsing de fecha
-        }
+        } catch (e: Exception) { }
     }
 
     val selectedInfo = parksMap[selectedParkName]
@@ -128,6 +131,7 @@ fun ThemeParksScreen(
                         val info = weather!!
                         val rainIcon = if (info.rainChance > 30) "🌧️" else "☀️"
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = txtLocation, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(text = "🌡️ ${info.currentTemp}°C", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
                                 Spacer(Modifier.width(16.dp))
@@ -152,7 +156,8 @@ fun ThemeParksScreen(
                 // SELECTOR
                 Box(Modifier.fillMaxWidth()) {
                     OutlinedCard(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-                        Row(modifier = Modifier.padding(14.dp).fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                        Row(modifier = Modifier.padding(14.dp).fillMaxWidth(),
+                            Arrangement.SpaceBetween, Alignment.CenterVertically) {
                             Text(selectedParkName)
                             Icon(Icons.Default.ArrowDropDown, null)
                         }
@@ -167,7 +172,6 @@ fun ThemeParksScreen(
                 selectedInfo?.let { info ->
                     Spacer(Modifier.height(20.dp))
 
-                    // 1. CARD DE HORARIOS
                     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                         Column(Modifier.padding(12.dp)) {
                             Text(txtHours, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
@@ -175,7 +179,6 @@ fun ThemeParksScreen(
                         }
                     }
 
-                    // 2. TIEMPO DE CONDUCCIÓN
                     Spacer(Modifier.height(8.dp))
                     Surface(modifier = Modifier.fillMaxWidth(), color = Color.White.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp)) {
                         Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -188,14 +191,17 @@ fun ThemeParksScreen(
 
                     Spacer(Modifier.height(18.dp))
 
-                    // 3. BOTÓN: DE CASA AL PARQUE
+                    // 3. BOTÓN: DE CASA AL PARQUE (RUTA DESDE HOGAR CONFIGURADO)
                     Button(
                         onClick = {
                             if (settingsManager.homeStreet.isNotEmpty()) {
-                                val homeOrigin = "${settingsManager.homeStreet} ${settingsManager.homeNumber}, ${settingsManager.homeCity}".replace(" ", "+")
+                                val homeOrigin = "${settingsManager.homeStreet} ${settingsManager.homeNumber}, ${settingsManager.homeCity}"
                                 val destination = info.tollPlazaCoords
-                                val url = "https://www.google.com/maps/dir/?api=1&origin=$homeOrigin&destination=$destination&travelmode=d"
-                                uriHandler.openUri(url)
+
+                                // Usamos el modo Directions con origen fijo para que no use el GPS actual.
+                                val url = "https://www.google.com/maps/dir/?api=1&origin=$homeOrigin&destination=$destination&travelmode=driving"
+
+                                uriHandler.openUri(url.replace(" ", "+"))
                             } else {
                                 onNavigateToSettings()
                             }
@@ -207,7 +213,6 @@ fun ThemeParksScreen(
 
                     Spacer(Modifier.height(8.dp))
 
-                    // 4. BOTÓN: VER TIEMPOS DE ESPERA
                     OutlinedButton(
                         onClick = { onNavigateToDetail(selectedParkName, info) },
                         modifier = Modifier.fillMaxWidth().height(48.dp)
@@ -218,7 +223,6 @@ fun ThemeParksScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // BOTÓN CONFIGURACIÓN
                 Row(
                     modifier = Modifier.align(Alignment.Start).clip(RoundedCornerShape(12.dp))
                         .clickable { onNavigateToSettings() }.padding(8.dp),

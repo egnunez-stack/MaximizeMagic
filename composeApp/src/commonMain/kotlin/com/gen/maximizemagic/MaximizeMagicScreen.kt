@@ -1,92 +1,108 @@
-package com.gen.maximizemagic
+package com.gen.maximizemagic.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gen.maximizemagic.model.SettingsManager
 import com.gen.maximizemagic.ui.layout.*
-import io.kamel.image.KamelImage
-import io.kamel.image.asyncPainterResource
 
 @Composable
-fun MainLayout(
-    title: String,
-    showBackButton: Boolean = false,
-    userPhotoUrl: String? = null,
-    onBackClick: () -> Unit = {},
-    content: @Composable (PaddingValues) -> Unit
+fun MaximizeMagicScreen(
+    onConnectGoogleClick: () -> Unit,
+    onConnectFacebookClick: () -> Unit,
+    onExitClick: () -> Unit
 ) {
-    // LOG DE SEGUIMIENTO
-    println("#MaximizeMagic: Renderizando MainLayout. Titulo: $title, FotoURL: ${userPhotoUrl ?: "NULA"}")
+    val settingsManager = remember { SettingsManager() }
+    val isEs = settingsManager.language == "es"
 
-    Scaffold(
-        topBar = {
-            Surface(shadowElevation = 3.dp, color = Color.White, modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.statusBarsPadding().height(56.dp).padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // 1. BOTÓN ATRÁS
-                    Box(modifier = Modifier.width(48.dp), contentAlignment = Alignment.CenterStart) {
-                        if (showBackButton) {
-                            IconButton(onClick = onBackClick) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = TextPrimary)
-                            }
-                        }
-                    }
+    // Textos dinámicos
+    val txtWelcome = if (isEs) "Bienvenido a\nMaximize the Magic" else "Welcome to\nMaximize the Magic"
+    val txtGoogle = if (isEs) "Conectarse con Google" else "Connect with Google"
+    val txtFacebook = if (isEs) "Conectarse con Facebook" else "Connect with Facebook"
+    val txtExit = if (isEs) "Salir" else "Exit"
 
-                    // 2. TÍTULO
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary,
-                        modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
-                        maxLines = 1
-                    )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(CelesteBg)
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // 1. Icono / Logo
+        Text(
+            text = "🏰",
+            fontSize = 80.sp,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
-                    // 3. FOTO DE PERFIL REAL
-                    if (!userPhotoUrl.isNullOrEmpty()) {
-                        println("#MaximizeMagic: Intentando cargar KamelImage para $userPhotoUrl")
-                        Box(
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            KamelImage(
-                                resource = asyncPainterResource(userPhotoUrl),
-                                contentDescription = "Foto de perfil",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize(),
-                                onLoading = {
-                                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                                },
-                                onFailure = {
-                                    println("#MaximizeMagic: Error cargando imagen en Kamel")
-                                    Text("👤", fontSize = 20.sp)
-                                }
-                            )
-                        }
-                    } else {
-                        Spacer(modifier = Modifier.width(40.dp))
-                    }
-                }
-            }
-        },
-        containerColor = MaximizeMagicCelesteBg
-    ) { paddingValues ->
-        content(paddingValues)
+        // 2. Título
+        Text(
+            text = txtWelcome,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 40.dp)
+        )
+
+        // 3. BOTÓN GOOGLE (Blanco)
+        Button(
+            onClick = onConnectGoogleClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = Color.Black
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+        ) {
+            Text(txtGoogle, fontWeight = FontWeight.Medium)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 4. BOTÓN FACEBOOK (Comentado)
+        /*
+        Button(
+            onClick = onConnectFacebookClick,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF1877F2),
+                contentColor = Color.White
+            )
+        ) {
+            Text(txtFacebook, fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        */
+
+        // 5. BOTÓN SALIR (Ahora con el mismo formato que Google pero en color CelesteMain)
+        Button(
+            onClick = onExitClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = CelesteMain,
+                contentColor = Color.White
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+        ) {
+            Text(txtExit, fontWeight = FontWeight.Bold)
+        }
     }
 }

@@ -1,3 +1,6 @@
 <resources>
-    <string name="app_name">MaximizeMagic</string>
+    <string name="app_name">Maximize Magic</string>
+    <string name="facebook_app_id">1792366598138641</string>
+    <string name="facebook_client_token">9eedd1703f94fb82bdde09def4777927</string>
+    <string name="fb_login_protocol_scheme">fb1792366598138641</string>
 </resources>

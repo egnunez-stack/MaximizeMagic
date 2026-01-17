@@ -14,7 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gen.maximizemagic.MainLayout
+import com.gen.maximizemagic.ui.MainLayout
+import com.gen.maximizemagic.ui.layout.MainLayout
 import kotlinx.coroutines.delay
 import kotlinx.datetime.*
 
@@ -87,7 +88,7 @@ fun SettingsScreen(
             val flightDateTime = LocalDateTime.parse("${date}T${time}:00")
             val flightInstant = flightDateTime.toInstant(TimeZone.currentSystemDefault())
             val duration = flightInstant - now
-            if (duration.inWholeHours in 0..23) {
+            if (duration.inWholeHours in (0..23)) {
                 checkInNotice = "${texts["checkin_msg"]}$flight"
             }
         } catch (e: Exception) {}
