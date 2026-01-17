@@ -21,7 +21,7 @@ import kotlinx.datetime.*
 @Composable
 fun SettingsScreen(
     userPhotoUrl: String?,
-    onNavigateToAgenda: () -> Unit, // PARÁMETRO AÑADIDO
+    onNavigateToAgenda: () -> Unit,
     onBack: () -> Unit
 ) {
     val settingsManager = remember { SettingsManager() }
@@ -42,7 +42,7 @@ fun SettingsScreen(
             "arrival" to "Vuelo de Ida",
             "departure" to "Vuelo de Vuelta",
             "lang" to "Idioma",
-            "agenda" to "Agenda Parques", // AÑADIDO
+            "agenda" to "Agenda Parques",
             "save" to "Guardar",
             "cancel" to "Cancelar",
             "street" to "Calle",
@@ -60,7 +60,7 @@ fun SettingsScreen(
             "arrival" to "Arrival Flight",
             "departure" to "Departure Flight",
             "lang" to "Language",
-            "agenda" to "Park Schedule", // AÑADIDO
+            "agenda" to "Park Schedule",
             "save" to "Save",
             "cancel" to "Cancel",
             "street" to "Street",
@@ -106,13 +106,14 @@ fun SettingsScreen(
             ) {
                 Text(text = texts["header"]!!, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
 
-                // 1. Hogar
+                // 1. Botón Hogar (Muestra la dirección configurada para la Toll Plaza)
                 Button(onClick = { showHomeDialog = true }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                     val street = settingsManager.homeStreet
-                    Text(if (street.isEmpty()) texts["home"]!! else "🏠 $street, ${settingsManager.homeCity}")
+                    val city = settingsManager.homeCity
+                    Text(if (street.isEmpty()) texts["home"]!! else "🏠 $street ${settingsManager.homeNumber}, $city")
                 }
 
-                // 2. Agenda Parques (NUEVO BOTÓN)
+                // 2. Agenda Parques
                 Button(
                     onClick = onNavigateToAgenda,
                     modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -154,7 +155,7 @@ fun SettingsScreen(
         }
     }
 
-    // --- DIÁLOGOS ---
+    // --- DIÁLOGOS DE VUELO ---
     @Composable
     fun FlightDialog(isArrival: Boolean, onDismiss: () -> Unit) {
         var fNum by remember { mutableStateOf(if (isArrival) settingsManager.arrivalFlight else settingsManager.departureFlight) }
@@ -188,6 +189,7 @@ fun SettingsScreen(
     if (showArrivalDialog) FlightDialog(true) { showArrivalDialog = false }
     if (showDepartureDialog) FlightDialog(false) { showDepartureDialog = false }
 
+    // --- DIÁLOGO HOGAR (CORREGIDO PARA TOLL PLAZA) ---
     if (showHomeDialog) {
         var tempStreet by remember { mutableStateOf(settingsManager.homeStreet) }
         var tempNumber by remember { mutableStateOf(settingsManager.homeNumber) }
@@ -200,21 +202,52 @@ fun SettingsScreen(
             title = { Text(texts["home"]!!, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = tempStreet, onValueChange = { tempStreet = it }, label = { Text(texts["street"]!!) })
-                    OutlinedTextField(value = tempNumber, onValueChange = { tempNumber = it }, label = { Text(texts["number"]!!) })
-                    Box {
-                        OutlinedTextField(value = tempCity, onValueChange = { }, readOnly = true, label = { Text(texts["city"]!!) },
+                    OutlinedTextField(
+                        value = tempStreet,
+                        onValueChange = { tempStreet = it },
+                        label = { Text(texts["street"]!!) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = tempNumber,
+                        onValueChange = { tempNumber = it },
+                        label = { Text(texts["number"]!!) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = tempCity,
+                            onValueChange = { },
+                            readOnly = true,
+                            label = { Text(texts["city"]!!) },
                             trailingIcon = { Icon(Icons.Default.ArrowDropDown, null, Modifier.clickable { cityExpanded = true }) },
-                            modifier = Modifier.fillMaxWidth())
-                        DropdownMenu(expanded = cityExpanded, onDismissRequest = { cityExpanded = false }) {
-                            cities.forEach { c -> DropdownMenuItem(text = { Text(c) }, onClick = { tempCity = c; cityExpanded = false }) }
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        DropdownMenu(
+                            expanded = cityExpanded,
+                            onDismissRequest = { cityExpanded = false },
+                            modifier = Modifier.fillMaxWidth(0.7f)
+                        ) {
+                            cities.forEach { c ->
+                                DropdownMenuItem(
+                                    text = { Text(c) },
+                                    onClick = {
+                                        tempCity = c
+                                        cityExpanded = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             },
             confirmButton = {
                 Button(onClick = {
-                    settingsManager.homeStreet = tempStreet; settingsManager.homeNumber = tempNumber; settingsManager.homeCity = tempCity; showHomeDialog = false
+                    // Guardado granular para que ThemeParksScreen pueda construir la ruta a la Toll Plaza
+                    settingsManager.homeStreet = tempStreet
+                    settingsManager.homeNumber = tempNumber
+                    settingsManager.homeCity = tempCity
+                    showHomeDialog = false
                 }) { Text(texts["save"]!!) }
             },
             dismissButton = { TextButton(onClick = { showHomeDialog = false }) { Text(texts["cancel"]!!) } }

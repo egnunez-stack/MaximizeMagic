@@ -48,6 +48,9 @@ fun ThemeParksScreen(
     val txtSettings = if (isEs) "Configuración" else "Settings"
     val txtRain = if (isEs) "Lluvia" else "Rain"
 
+    // TEXTO DEL BOTÓN DE RUTA
+    val txtRoute = if (isEs) "🚗 De casa al parque" else "🚗 From home to park"
+
     var expanded by remember { mutableStateOf(false) }
     var selectedParkName by remember { mutableStateOf(txtSelect) }
     val selectedInfo = parksMap[selectedParkName]
@@ -66,7 +69,7 @@ fun ThemeParksScreen(
         }
     }
 
-    // --- LÓGICA DE TIEMPO DE CONDUCCIÓN ---
+    // --- LÓGICA DE TIEMPO DE CONDUCCIÓN (SIMULADO) ---
     val drivingTimeLabel = remember(selectedParkName, settingsManager.homeStreet) {
         if (selectedInfo != null && settingsManager.homeStreet.isNotEmpty()) {
             "${(15..40).random()} min"
@@ -102,7 +105,6 @@ fun ThemeParksScreen(
                         val rainIcon = if (info.rainChance > 30) "🌧️" else "☀️"
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            // Fila 1: Temperatura Actual y Lluvia
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
                                     text = "🌡️ ${info.currentTemp}°C",
@@ -117,14 +119,12 @@ fun ThemeParksScreen(
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
-                            // Fila 2: Mínima y Máxima
                             Text(
                                 text = "⬇️ ${info.minTemp}°C  |  ⬆️ ${info.maxTemp}°C",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                             )
-                            // Fila 3: Condición (ej. Soleado)
                             Text(
                                 text = info.conditionText,
                                 style = MaterialTheme.typography.labelSmall,
@@ -193,15 +193,30 @@ fun ThemeParksScreen(
 
                     Spacer(Modifier.height(18.dp))
 
+                    // 3. BOTÓN: DE CASA AL PARQUE (TOLL PLAZA)
                     Button(
-                        onClick = { uriHandler.openUri("https://www.google.com/maps/search/?api=1&query=${info.tollPlazaCoords}") },
+                        onClick = {
+                            if (settingsManager.homeStreet.isNotEmpty()) {
+                                // Construimos la dirección de origen
+                                val homeOrigin = "${settingsManager.homeStreet} ${settingsManager.homeNumber}, ${settingsManager.homeCity}".replace(" ", "+")
+                                // El destino es la Toll Plaza del parque
+                                val destination = info.tollPlazaCoords
+                                // travelmode=d asegura que el trayecto sea en auto
+                                val url = "https://www.google.com/maps/dir/?api=1&origin=$homeOrigin&destination=$destination&travelmode=d"
+                                uriHandler.openUri(url)
+                            } else {
+                                // Si no hay dirección, redirige a configuración
+                                onNavigateToSettings()
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
-                        Text(if (isEs) "🚗 Ir al Mapa" else "🚗 Open Map")
+                        Text(txtRoute)
                     }
 
                     Spacer(Modifier.height(8.dp))
 
+                    // 4. BOTÓN: VER TIEMPOS DE ESPERA
                     OutlinedButton(
                         onClick = { onNavigateToDetail(selectedParkName, info) },
                         modifier = Modifier.fillMaxWidth().height(48.dp)
