@@ -51,6 +51,13 @@ fun ParkDetailScreen(
     val txtClosed = if (isEs) "Cerrado" else "Closed"
     val txtMagicRec = if (isEs) "✨ Recomendación Mágica" else "✨ Magic Recommendation"
     val txtGoNow = if (isEs) "¡Ve ahora!" else "Go now!"
+    val txtDirections = if (isEs) "Seleccionar punto de inicio" else "Select starting point"
+    val txtTickets = if (isEs) "Desde Boletería" else "From Ticket Office"
+    val txtParking = if (isEs) "Desde Estacionamiento" else "From Parking"
+
+    // --- ESTADOS DE RUTA ---
+    var showRouteDialog by remember { mutableStateOf(false) }
+    var selectedRideForRoute by remember { mutableStateOf<AttractionAlternative?>(null) }
 
     // --- ESTADOS DE FILTRO Y ORDEN ---
     var searchQuery by remember { mutableStateOf("") }
@@ -70,6 +77,50 @@ fun ParkDetailScreen(
         }
     }
 
+    // Función para abrir Google Maps
+    val openGoogleMaps: (String) -> Unit = { originName ->
+        val rideName = selectedRideForRoute?.name ?: ""
+        val destination = "$rideName $parkName".replace(" ", "+")
+        val origin = "$parkName $originName".replace(" ", "+")
+        val url = "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&travelmode=walking"
+        uriHandler.openUri(url)
+    }
+
+    // --- DIÁLOGO DE SELECCIÓN DE RUTA ---
+    if (showRouteDialog && selectedRideForRoute != null) {
+        AlertDialog(
+            onDismissRequest = { showRouteDialog = false },
+            title = { Text(txtDirections, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Opción: Boletería
+                    Card(
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            openGoogleMaps("Tickets")
+                            showRouteDialog = false
+                        },
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))
+                    ) {
+                        Text(txtTickets, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold)
+                    }
+                    // Opción: Estacionamiento
+                    Card(
+                        modifier = Modifier.fillMaxWidth().clickable {
+                            openGoogleMaps("Parking")
+                            showRouteDialog = false
+                        },
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
+                    ) {
+                        Text(txtParking, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showRouteDialog = false }) { Text(if (isEs) "Cerrar" else "Close") }
+            }
+        )
+    }
+
     MainLayout(
         title = parkName,
         showBackButton = true,
@@ -78,7 +129,7 @@ fun ParkDetailScreen(
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
 
-            // --- BARRA DE BÚSQUEDA Y FILTROS (TRADUCIDA) ---
+            // --- BARRA DE BÚSQUEDA Y FILTROS ---
             Surface(tonalElevation = 2.dp, shadowElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     OutlinedTextField(
@@ -98,11 +149,11 @@ fun ParkDetailScreen(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(checked = hideClosed, onCheckedChange = { hideClosed = it })
-                            Text(txtHideClosed, style = MaterialTheme.typography.bodySmall) // TRADUCIDO
+                            Text(txtHideClosed, style = MaterialTheme.typography.bodySmall)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(checked = sortByWaitTime, onCheckedChange = { sortByWaitTime = it })
-                            Text(txtSortWait, style = MaterialTheme.typography.bodySmall) // TRADUCIDO
+                            Text(txtSortWait, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
@@ -129,7 +180,10 @@ fun ParkDetailScreen(
                         if (recommendation != null) {
                             item {
                                 Card(
-                                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                                    modifier = Modifier.padding(16.dp).fillMaxWidth().clickable {
+                                        selectedRideForRoute = recommendation
+                                        showRouteDialog = true
+                                    },
                                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9C4))
                                 ) {
                                     Column(Modifier.padding(16.dp)) {
@@ -143,7 +197,15 @@ fun ParkDetailScreen(
                     }
 
                     items(allFilteredRides) { attraction ->
-                        RideRow(attraction, txtWaitMin, txtClosed)
+                        RideRow(
+                            attraction = attraction,
+                            waitSuffix = txtWaitMin,
+                            closedText = txtClosed,
+                            onClick = {
+                                selectedRideForRoute = attraction
+                                showRouteDialog = true
+                            }
+                        )
                         HorizontalDivider(thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
                     }
                 }
@@ -153,8 +215,19 @@ fun ParkDetailScreen(
 }
 
 @Composable
-fun RideRow(attraction: AttractionAlternative, waitSuffix: String, closedText: String) {
-    Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+fun RideRow(
+    attraction: AttractionAlternative,
+    waitSuffix: String,
+    closedText: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Column(Modifier.weight(1f)) {
             Text(attraction.name, style = MaterialTheme.typography.bodyLarge)
         }
@@ -165,3 +238,9 @@ fun RideRow(attraction: AttractionAlternative, waitSuffix: String, closedText: S
         )
     }
 }
+
+@Composable
+fun Modifier.scale(scale: Float): Modifier = this.then(Modifier.layout { m, c ->
+    val p = m.measure(c)
+    layout(p.width, p.height) { p.placeWithLayer(0, 0) { scaleX = scale; scaleY = scale } }
+})

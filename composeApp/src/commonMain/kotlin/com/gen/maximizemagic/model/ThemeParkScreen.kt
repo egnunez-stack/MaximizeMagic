@@ -46,6 +46,7 @@ fun ThemeParksScreen(
     val txtNoHome = if (isEs) "Configura tu hogar en ajustes" else "Set your home in settings"
     val txtWaitTimes = if (isEs) "🎢 Ver Tiempos de Espera" else "🎢 View Wait Times"
     val txtSettings = if (isEs) "Configuración" else "Settings"
+    val txtRain = if (isEs) "Lluvia" else "Rain"
 
     var expanded by remember { mutableStateOf(false) }
     var selectedParkName by remember { mutableStateOf(txtSelect) }
@@ -68,7 +69,6 @@ fun ThemeParksScreen(
     // --- LÓGICA DE TIEMPO DE CONDUCCIÓN ---
     val drivingTimeLabel = remember(selectedParkName, settingsManager.homeStreet) {
         if (selectedInfo != null && settingsManager.homeStreet.isNotEmpty()) {
-            // Simulación: Tiempo aleatorio entre 15 y 40 min
             "${(15..40).random()} min"
         } else null
     }
@@ -81,36 +81,67 @@ fun ThemeParksScreen(
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
 
-            // BARRA DE CLIMA (Compactada)
+            // --- BARRA DE CLIMA AGRANDADA Y DETALLADA ---
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.secondaryContainer,
-                tonalElevation = 2.dp
+                tonalElevation = 3.dp,
+                shape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
                     if (isLoadingWeather) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                     } else if (weather != null) {
-                        Text(
-                            text = "🌡️ ${weather!!.currentTemp}°C - ${weather!!.conditionText}",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        val info = weather!!
+                        val rainIcon = if (info.rainChance > 30) "🌧️" else "☀️"
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            // Fila 1: Temperatura Actual y Lluvia
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "🌡️ ${info.currentTemp}°C",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                                Spacer(Modifier.width(16.dp))
+                                Text(
+                                    text = "$rainIcon $txtRain: ${info.rainChance}%",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            // Fila 2: Mínima y Máxima
+                            Text(
+                                text = "⬇️ ${info.minTemp}°C  |  ⬆️ ${info.maxTemp}°C",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            )
+                            // Fila 3: Condición (ej. Soleado)
+                            Text(
+                                text = info.conditionText,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
                     }
                 }
             }
 
             Column(
-                modifier = Modifier.fillMaxSize().padding(20.dp), // Padding reducido 20%
+                modifier = Modifier.fillMaxSize().padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(text = txtHeader, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
-                Spacer(Modifier.height(18.dp)) // Spacer reducido
+                Spacer(Modifier.height(18.dp))
 
                 // SELECTOR
                 Box(Modifier.fillMaxWidth()) {
@@ -141,7 +172,7 @@ fun ThemeParksScreen(
                         }
                     }
 
-                    // 2. NUEVO: CARTEL DE TIEMPO DE CONDUCCIÓN
+                    // 2. TIEMPO DE CONDUCCIÓN
                     Spacer(Modifier.height(8.dp))
                     Surface(
                         modifier = Modifier.fillMaxWidth(),

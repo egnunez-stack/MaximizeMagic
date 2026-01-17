@@ -76,7 +76,7 @@ fun SettingsScreen(
 
     LaunchedEffect(checkInNotice) {
         if (checkInNotice != null) {
-            delay(7000)
+            delay(4000)
             checkInNotice = null
         }
     }
