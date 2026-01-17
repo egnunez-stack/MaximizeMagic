@@ -6,12 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -52,8 +53,8 @@ fun ParkDetailScreen(
     val txtMagicRec = if (isEs) "✨ Recomendación Mágica" else "✨ Magic Recommendation"
     val txtGoNow = if (isEs) "¡Ve ahora!" else "Go now!"
     val txtDirections = if (isEs) "Seleccionar punto de inicio" else "Select starting point"
-    val txtTickets = if (isEs) "Desde Boletería" else "From Ticket Office"
-    val txtParking = if (isEs) "Desde Estacionamiento" else "From Parking"
+    val txtTickets = if (isEs) "Desde Boletería (si estás lejos)" else "From Ticket Office (if far away)"
+    val txtCurrentPos = if (isEs) "Mi posición actual (GPS)" else "My current location (GPS)"
 
     // --- ESTADOS DE RUTA ---
     var showRouteDialog by remember { mutableStateOf(false) }
@@ -77,11 +78,15 @@ fun ParkDetailScreen(
         }
     }
 
-    // Función para abrir Google Maps
-    val openGoogleMaps: (String) -> Unit = { originName ->
+    // --- FUNCIÓN DE NAVEGACIÓN INTELIGENTE ---
+    val openGoogleMaps: (Boolean) -> Unit = { useCurrentLocation ->
         val rideName = selectedRideForRoute?.name ?: ""
         val destination = "$rideName $parkName".replace(" ", "+")
-        val origin = "$parkName $originName".replace(" ", "+")
+
+        // Si useCurrentLocation es true, origin va vacío (Google Maps usa el GPS actual)
+        // Si es false, forzamos la "Boletería" (Tickets) del parque
+        val origin = if (useCurrentLocation) "" else "$parkName+Tickets"
+
         val url = "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&travelmode=walking"
         uriHandler.openUri(url)
     }
@@ -93,25 +98,38 @@ fun ParkDetailScreen(
             title = { Text(txtDirections, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Opción: Boletería
+                    // Opción 1: GPS Actual (Ideal para cuando estás adentro o en el parking)
                     Card(
                         modifier = Modifier.fillMaxWidth().clickable {
-                            openGoogleMaps("Tickets")
+                            openGoogleMaps(true)
                             showRouteDialog = false
                         },
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)) // Azul claro
                     ) {
-                        Text(txtTickets, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold)
+                        Column(Modifier.padding(16.dp)) {
+                            Text(txtCurrentPos, fontWeight = FontWeight.Bold)
+                            Text(
+                                if(isEs) "Usa tu ubicación en tiempo real" else "Uses your real-time location",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
-                    // Opción: Estacionamiento
+
+                    // Opción 2: Boletería (Ideal para cuando estás lejos o planificando)
                     Card(
                         modifier = Modifier.fillMaxWidth().clickable {
-                            openGoogleMaps("Parking")
+                            openGoogleMaps(false)
                             showRouteDialog = false
                         },
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)) // Verde claro
                     ) {
-                        Text(txtParking, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold)
+                        Column(Modifier.padding(16.dp)) {
+                            Text(txtTickets, fontWeight = FontWeight.Bold)
+                            Text(
+                                if(isEs) "Ruta desde la entrada del parque" else "Route from the park entrance",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
                 }
             },

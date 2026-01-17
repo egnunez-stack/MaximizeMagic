@@ -22,6 +22,7 @@ import com.gen.maximizemagic.MainLayout
 import com.gen.maximizemagic.ParkInfo
 import com.gen.maximizemagic.network.ParkApi
 import com.gen.maximizemagic.network.OrlandoWeather
+import kotlinx.datetime.* // Necesario para obtener la fecha de hoy
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,12 +48,37 @@ fun ThemeParksScreen(
     val txtWaitTimes = if (isEs) "🎢 Ver Tiempos de Espera" else "🎢 View Wait Times"
     val txtSettings = if (isEs) "Configuración" else "Settings"
     val txtRain = if (isEs) "Lluvia" else "Rain"
-
-    // TEXTO DEL BOTÓN DE RUTA
     val txtRoute = if (isEs) "🚗 De casa al parque" else "🚗 From home to park"
 
-    var expanded by remember { mutableStateOf(false) }
+    // --- ESTADO DE SELECCIÓN ---
     var selectedParkName by remember { mutableStateOf(txtSelect) }
+
+    // --- LÓGICA DE AUTO-SELECCIÓN POR AGENDA ---
+    LaunchedEffect(Unit) {
+        try {
+            // 1. Obtener fecha de hoy en formato YYYY-MM-DD
+            val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+
+            // 2. Leer la agenda (Formato "2024-12-24:Epcot|...")
+            val agenda = settingsManager.parkAgenda
+
+            if (agenda.isNotEmpty()) {
+                // 3. Buscar si hay una entrada para hoy
+                val entryToday = agenda.split("|").find { it.startsWith(today) }
+
+                if (entryToday != null) {
+                    val parkNameFromAgenda = entryToday.substringAfter(":")
+                    // 4. Validar que el parque de la agenda exista en nuestro mapa de datos
+                    if (parksMap.containsKey(parkNameFromAgenda)) {
+                        selectedParkName = parkNameFromAgenda
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Error silencioso si falla el parsing de fecha
+        }
+    }
+
     val selectedInfo = parksMap[selectedParkName]
     val uriHandler = LocalUriHandler.current
 
@@ -84,7 +110,7 @@ fun ThemeParksScreen(
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
 
-            // --- BARRA DE CLIMA AGRANDADA Y DETALLADA ---
+            // --- BARRA DE CLIMA ---
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.secondaryContainer,
@@ -92,9 +118,7 @@ fun ThemeParksScreen(
                 shape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
             ) {
                 Row(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .fillMaxWidth(),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp).fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
@@ -103,33 +127,14 @@ fun ThemeParksScreen(
                     } else if (weather != null) {
                         val info = weather!!
                         val rainIcon = if (info.rainChance > 30) "🌧️" else "☀️"
-
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "🌡️ ${info.currentTemp}°C",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
+                                Text(text = "🌡️ ${info.currentTemp}°C", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
                                 Spacer(Modifier.width(16.dp))
-                                Text(
-                                    text = "$rainIcon $txtRain: ${info.rainChance}%",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
+                                Text(text = "$rainIcon $txtRain: ${info.rainChance}%", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                             }
-                            Text(
-                                text = "⬇️ ${info.minTemp}°C  |  ⬆️ ${info.maxTemp}°C",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                            )
-                            Text(
-                                text = info.conditionText,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
+                            Text(text = "⬇️ ${info.minTemp}°C  |  ⬆️ ${info.maxTemp}°C", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
+                            Text(text = info.conditionText, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
                         }
                     }
                 }
@@ -139,8 +144,9 @@ fun ThemeParksScreen(
                 modifier = Modifier.fillMaxSize().padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = txtHeader, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                var expanded by remember { mutableStateOf(false) }
 
+                Text(text = txtHeader, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(18.dp))
 
                 // SELECTOR
@@ -162,10 +168,7 @@ fun ThemeParksScreen(
                     Spacer(Modifier.height(20.dp))
 
                     // 1. CARD DE HORARIOS
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                    ) {
+                    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                         Column(Modifier.padding(12.dp)) {
                             Text(txtHours, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
                             Text("${info.openingHours} - ${info.closingHours}", style = MaterialTheme.typography.bodySmall)
@@ -174,38 +177,26 @@ fun ThemeParksScreen(
 
                     // 2. TIEMPO DE CONDUCCIÓN
                     Spacer(Modifier.height(8.dp))
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = Color.White.copy(alpha = 0.6f),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
+                    Surface(modifier = Modifier.fillMaxWidth(), color = Color.White.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp)) {
                         Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = if (drivingTimeLabel != null)
-                                    "🚗 $txtDriveTime: $drivingTimeLabel $txtFromHome"
-                                else "📍 $txtNoHome",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.primary
+                                text = if (drivingTimeLabel != null) "🚗 $txtDriveTime: $drivingTimeLabel $txtFromHome" else "📍 $txtNoHome",
+                                style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
 
                     Spacer(Modifier.height(18.dp))
 
-                    // 3. BOTÓN: DE CASA AL PARQUE (TOLL PLAZA)
+                    // 3. BOTÓN: DE CASA AL PARQUE
                     Button(
                         onClick = {
                             if (settingsManager.homeStreet.isNotEmpty()) {
-                                // Construimos la dirección de origen
                                 val homeOrigin = "${settingsManager.homeStreet} ${settingsManager.homeNumber}, ${settingsManager.homeCity}".replace(" ", "+")
-                                // El destino es la Toll Plaza del parque
                                 val destination = info.tollPlazaCoords
-                                // travelmode=d asegura que el trayecto sea en auto
                                 val url = "https://www.google.com/maps/dir/?api=1&origin=$homeOrigin&destination=$destination&travelmode=d"
                                 uriHandler.openUri(url)
                             } else {
-                                // Si no hay dirección, redirige a configuración
                                 onNavigateToSettings()
                             }
                         },
