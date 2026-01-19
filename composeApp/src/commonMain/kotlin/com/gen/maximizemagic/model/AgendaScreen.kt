@@ -39,14 +39,14 @@ fun AgendaScreen(
 
     val parksList = parksInfo.keys.toList()
 
-    // --- CORRECCIÓN DEFINITIVA DE FECHA SELECCIONADA ---
+    // --- CORRECCIÓN DE FECHA SELECCIONADA ---
+    // Usamos TimeZone.UTC para extraer el día que el usuario ve en el calendario
     val dateString = remember(datePickerState.selectedDateMillis) {
         val millis = datePickerState.selectedDateMillis
         if (millis != null) {
-            // Usamos UTC para obtener el día exacto que el usuario marcó en el calendario
             val instant = Instant.fromEpochMilliseconds(millis)
             val date = instant.toLocalDateTime(TimeZone.UTC).date
-            date.toString() // Devuelve "YYYY-MM-DD"
+            date.toString()
         } else ""
     }
 
@@ -118,9 +118,9 @@ fun AgendaScreen(
                     Text(if (isEs) "Cancelar" else "Cancel")
                 }
 
+                // ... (dentro del onClick del botón Grabar) ...
                 Button(
                     onClick = {
-                        // 1. Guardar la agenda primero
                         settingsManager.parkAgenda = tempAgenda
 
                         if (dateString.isNotEmpty()) {
@@ -131,42 +131,38 @@ fun AgendaScreen(
                                 val pOpen = parksInfo[pName] ?: "09:00"
 
                                 try {
-                                    // --- LÓGICA DE ALARMA MANUAL Y SEGURA ---
-
-                                    // Separamos la hora de apertura (09:00)
-                                    val hourParts = pOpen.split(":")
-                                    val openHour = hourParts[0].toInt()
-                                    val openMin = hourParts[1].toInt()
-
-                                    // Parseamos la fecha (2024-01-24) que sabemos que es correcta
+                                    // 1. Extraer componentes de fecha y hora
+                                    val hour = pOpen.substringBefore(":").toInt()
+                                    val min = pOpen.substringAfter(":").toInt()
                                     val parkDate = LocalDate.parse(dateString)
 
-                                    // Creamos el LocalDateTime usando los componentes exactos
+                                    // 2. Construir LocalDateTime manual para evitar confusiones de zona horaria
                                     val openingDateTime = LocalDateTime(
                                         year = parkDate.year,
                                         monthNumber = parkDate.monthNumber,
                                         dayOfMonth = parkDate.dayOfMonth,
-                                        hour = openHour,
-                                        minute = openMin
+                                        hour = hour,
+                                        minute = min
                                     )
 
-                                    // Convertimos a Instant usando la zona horaria del sistema del usuario
-                                    // Esto asegura que la alarma se programe en la hora local del celular
+                                    // 3. Convertir a instante real usando el Reloj del Sistema
                                     val systemTz = TimeZone.currentSystemDefault()
                                     val openingInstant = openingDateTime.toInstant(systemTz)
 
-                                    // Restamos los 80 minutos en milisegundos
-                                    val alarmTimeMillis = openingInstant.toEpochMilliseconds() - (80L * 60L * 1000L)
+                                    // 4. Restar 80 minutos exactos
+                                    val leadTimeMillis = 80L * 60L * 1000L
+                                    val alarmTimeMillis = openingInstant.toEpochMilliseconds() - leadTimeMillis
 
                                     val msg = if (isEs) "¡Despierta! Rumbo a $pName" else "Wake up! Heading to $pName"
 
-                                    // Log de depuración para ver en la consola si los milisegundos son correctos
-                                    println("#MaximizeMagic: Programando alarma para $openingDateTime menos 80 min")
+                                    // LOG de depuración para Logcat
+                                    println("#MaximizeMagic: Programando alarma para el día real: ${parkDate} (Milis: $alarmTimeMillis)")
 
+                                    // 5. Llamar al manager
                                     alarmManager.setAlarm(alarmTimeMillis, msg)
 
                                 } catch (e: Exception) {
-                                    println("Error crítico en alarma: ${e.message}")
+                                    println("#MaximizeMagic: Error en cálculo: ${e.message}")
                                 }
                             }
                         }
