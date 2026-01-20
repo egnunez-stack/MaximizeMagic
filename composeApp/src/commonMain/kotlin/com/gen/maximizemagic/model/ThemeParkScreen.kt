@@ -1,5 +1,6 @@
 package com.gen.maximizemagic.model
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -43,47 +44,18 @@ fun ThemeParksScreen(
     val isPt = settingsManager.language == "pt"
     val uriHandler = LocalUriHandler.current
 
-    // Estado para el diálogo de ayuda
     var showHelpDialog by remember { mutableStateOf(false) }
 
-    // Color Dorado institucional
     val magicGold = Color(0xFFD4AF37)
-    val translucency = 0.5f
+    val translucency = 0.3f
 
     // --- DICCIONARIO DE TEXTOS ---
-    val txtExit = when {
-        isPt -> "Sair"
-        isEs -> "Salir"
-        else -> "Exit"
-    }
-    val txtHeader = when {
-        isPt -> "Planeje sua Visita"
-        isEs -> "Planifica tu Visita"
-        else -> "Plan your Visit"
-    }
-    val txtSelect = when {
-        isPt -> "Selecione um Parque"
-        isEs -> "Seleccione un Parque"
-        else -> "Select a Park"
-    }
-    val txtHelpTitle = when {
-        isPt -> "Informação"
-        isEs -> "Información"
-        else -> "Information"
-    }
-    val txtClose = when {
-        isPt -> "Fechar"
-        isEs -> "Cerrar"
-        else -> "Close"
-    }
-    val txtHelpContent = when {
-        isPt -> "Para personalizar sua experiência, em configurações, coloque o endereço onde você ficará e poderá ver as rotas para os parques e o tempo de chegada de sua casa. Para alertas de voos e check-ins, configure seus voos. Por fim, você pode configurar seu idioma entre inglês, português e espanhol."
-        isEs -> "Para personalizar tu experiencia, en configuración, coloca el domicilio donde vas a estar, y podrás ver rutas a los parques y tiempo de llegada desde tu hogar. Para alertas de aviones y checkins configura tus vuelos. Por último puedes configurar tu lenguaje entre Inglés, Portugués y Español."
-        else -> "To customize your experience, in settings, enter the address where you will be staying, and you will be able to see routes to the parks and arrival time from your home. For flight alerts and check-ins, configure your flights. Finally, you can configure your language between English, Portuguese, and Spanish."
-    }
-
-    // (Textos de botones y clima omitidos por brevedad, mantener los anteriores...)
-    val txtOpen = if (isEs) "Abre:" else if (isPt) "Abre:" else "Open:"
+    val txtExit = when { isPt -> "Sair"; isEs -> "Salir"; else -> "Exit" }
+    val txtHeader = when { isPt -> "Planeje sua Visita"; isEs -> "Planifica tu Visita"; else -> "Plan your Visit" }
+    val txtSelect = when { isPt -> "Selecione um Parque"; isEs -> "Seleccione un Parque"; else -> "Select a Park" }
+    val txtHelpTitle = when { isPt -> "Informação"; isEs -> "Información"; else -> "Information" }
+    val txtClose = when { isPt -> "Fechar"; isEs -> "Cerrar"; else -> "Close" }
+    val txtOpen = if (isEs || isPt) "Abre:" else "Open:"
     val txtCloseLabel = if (isEs) "Cierra:" else if (isPt) "Fecha:" else "Close:"
     val txtRain = if (isEs) "Lluvia:" else if (isPt) "Chuva:" else "Rain:"
     val txtDriveTime = if (isEs) "Tiempo de conducción" else if (isPt) "Tempo de condução" else "Driving time"
@@ -91,10 +63,15 @@ fun ThemeParksScreen(
     val txtNoHome = if (isEs) "Configura tu hogar en ajustes" else if (isPt) "Configure sua casa nos ajustes" else "Set your home in settings"
     val txtSettings = if (isEs) "Configuración" else if (isPt) "Configurações" else "Settings"
 
+    val txtHelpContent = when {
+        isPt -> "Para personalizar sua experiência, em configurações, coloque o endereço onde você ficará e poderá ver as rotas para os parques e o tempo de chegada de sua casa. Para alertas de voos e check-ins, configure seus voos. Por fim, você pode configurar seu idioma entre inglês, português e espanhol."
+        isEs -> "Para personalizar tu experiencia, en configuración, coloca el domicilio donde vas a estar, y podrás ver rutas a los parques y tiempo de llegada desde tu hogar. Para alertas de aviones y checkins configura tus vuelos. Por último puedes configurar tu lenguaje entre Inglés, Portugués y Español."
+        else -> "To customize your experience, in settings, enter the address where you will be staying, and you will be able to see routes to the parks and arrival time from your home. For flight alerts and check-ins, configure your flights. Finally, you can configure your language between English, Portuguese, and Spanish."
+    }
+
     var selectedParkName by remember { mutableStateOf(txtSelect) }
     val selectedInfo = parksMap[selectedParkName]
 
-    // Lógica de Clima
     val api = remember { ParkApi() }
     var weather by remember { mutableStateOf(weatherInfoFromApp) }
     var isLoadingWeather by remember { mutableStateOf(weather == null) }
@@ -114,27 +91,16 @@ fun ThemeParksScreen(
     if (showHelpDialog) {
         AlertDialog(
             onDismissRequest = { showHelpDialog = false },
-            title = {
-                Text(txtHelpTitle, style = MaterialTheme.typography.titleLarge.copy(color = magicGold))
-            },
+            title = { Text(txtHelpTitle, style = MaterialTheme.typography.titleLarge.copy(color = magicGold)) },
             text = {
                 val scroll = rememberScrollState()
                 Column(modifier = Modifier.heightIn(max = 300.dp).verticalScroll(scroll)){
-                    Text(
-                        text = txtHelpContent,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Justify
-                    )
+                    Text(text = txtHelpContent, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Justify)
                 }
             },
             confirmButton = {},
             dismissButton = {
-                OutlinedButton(
-                    onClick = { showHelpDialog = false },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary)
-                ) {
-                    Text(txtClose)
-                }
+                OutlinedButton(onClick = { showHelpDialog = false }) { Text(txtClose) }
             },
             shape = RoundedCornerShape(16.dp),
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
@@ -151,7 +117,7 @@ fun ThemeParksScreen(
             modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. TÍTULO PRINCIPAL
+            // 1. TÍTULO PRINCIPAL (Dorado + Magic)
             Text(
                 text = txtHeader,
                 style = MaterialTheme.typography.headlineLarge.copy(
@@ -202,7 +168,7 @@ fun ThemeParksScreen(
             Box(Modifier.fillMaxWidth()) {
                 Card(
                     onClick = { expanded = true },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    modifier = Modifier.fillMaxWidth().height(60.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
                 ) {
@@ -213,16 +179,38 @@ fun ThemeParksScreen(
                     ) {
                         Text(
                             text = selectedParkName,
-                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, color = magicGold, textAlign = TextAlign.Center),
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontSize = 20.sp,
+                                color = Color.White,
+                                textAlign = TextAlign.Center
+                            ),
                             modifier = Modifier.weight(1f)
                         )
                         Icon(Icons.Default.ArrowDropDown, null, tint = Color.White)
                     }
                 }
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.fillMaxWidth(0.9f)) {
+
+                // --- MENÚ DESPLEGABLE CORREGIDO ---
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)) // Fondo azul semi-transparente
+                ) {
                     parksMap.keys.forEach { name ->
                         DropdownMenuItem(
-                            text = { Text(name, style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp, color = magicGold, textAlign = TextAlign.Center), modifier = Modifier.fillMaxWidth()) },
+                            text = {
+                                Text(
+                                    text = name,
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontSize = 18.sp,
+                                        color = Color.White, // Letras blancas
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            },
                             onClick = { selectedParkName = name; expanded = false }
                         )
                     }
@@ -240,13 +228,18 @@ fun ThemeParksScreen(
                 ) {
                     Button(
                         onClick = { onNavigateToDetail(selectedParkName, selectedInfo) },
-                        modifier = Modifier.fillMaxWidth().height(70.dp),
+                        modifier = Modifier.fillMaxWidth().height(75.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("$txtOpen ${selectedInfo.openingHours} - $txtCloseLabel ${selectedInfo.closingHours}", fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                            Text(if (isEs) "Ver Tiempos de Espera" else if (isPt) "Ver Tempos de Espera" else "View Wait Times", fontSize = 11.sp, textAlign = TextAlign.Center)
+                            Text(
+                                text = if (isEs) "Horários / Tempos de Espera" else if (isPt) "Horários / Tempos de Espera" else "Hours / Wait Times",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
+                            Text("$txtOpen ${selectedInfo.openingHours} - $txtCloseLabel ${selectedInfo.closingHours}", fontSize = 12.sp, textAlign = TextAlign.Center)
                         }
                     }
 
@@ -257,7 +250,7 @@ fun ThemeParksScreen(
                                 uriHandler.openUri("https://www.google.com/maps/dir/?api=1&origin=${home.replace(" ", "+")}&destination=${selectedInfo.tollPlazaCoords}&travelmode=driving")
                             } else { onNavigateToSettings() }
                         },
-                        modifier = Modifier.fillMaxWidth().height(70.dp),
+                        modifier = Modifier.fillMaxWidth().height(75.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
                     ) {
@@ -283,7 +276,7 @@ fun ThemeParksScreen(
                 FloatingActionButton(
                     onClick = { showHelpDialog = true },
                     modifier = Modifier.align(Alignment.CenterEnd).size(48.dp),
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f),
                     contentColor = MaterialTheme.colorScheme.primary
                 ) {
                     Icon(Icons.Default.Info, contentDescription = "Help")
