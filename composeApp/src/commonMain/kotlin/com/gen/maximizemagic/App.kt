@@ -13,6 +13,7 @@ import com.gen.maximizemagic.model.*
 import com.gen.maximizemagic.ui.MaximizeMagicScreen
 import com.gen.maximizemagic.network.ParkApi
 import com.gen.maximizemagic.network.OrlandoWeather
+import com.gen.maximizemagic.ui.theme.MaximizeMagicTheme // Importamos tu nuevo tema
 
 data class ParkInfo(
     val id: String,
@@ -36,7 +37,10 @@ fun App() {
     val authManager = remember { AuthManager() }
     val api = remember { ParkApi() }
     val settingsManager = remember { SettingsManager() }
-    val isEs = settingsManager.language == "es"
+
+    val currentLanguage = settingsManager.language
+    val isEs = currentLanguage == "es"
+    val isPt = currentLanguage == "pt"
 
     LaunchedEffect(Unit) {
         orlandoWeather = api.getOrlandoFullWeather()
@@ -44,7 +48,7 @@ fun App() {
 
     LaunchedEffect(showWelcomeMessage) {
         if (showWelcomeMessage) {
-            delay(4000) // 4 segundos como pediste anteriormente
+            delay(4000)
             showWelcomeMessage = false
         }
     }
@@ -57,11 +61,12 @@ fun App() {
             "Epcot" to ParkInfo("5", "09:00", "21:00", "28.369,-81.544"),
             "Universal Studios Florida" to ParkInfo("65", "09:00", "21:00", "28.473,-81.465"),
             "Islands of Adventure" to ParkInfo("64", "09:00", "21:00", "28.473,-81.465"),
-            "Universal Epic Universe" to ParkInfo("epic-wiki", "09:00", "21:00", "28.438,-81.452")
+            "Universal Epic Universe" to ParkInfo("334", "09:00", "21:00", "28.438,-81.452")
         )
     }
 
-    MaterialTheme {
+    // APLICAMOS TU TEMA PERSONALIZADO AQUÍ
+    MaximizeMagicTheme {
         Box(modifier = Modifier.fillMaxSize()) {
             when (currentScreen) {
                 Screen.Welcome -> {
@@ -69,17 +74,25 @@ fun App() {
                         onConnectGoogleClick = {
                             authManager.signInWithGoogle { success, name, photo ->
                                 if (success) {
-                                    userName = name ?: (if (isEs) "Usuario" else "User")
+                                    userName = name ?: when {
+                                        isPt -> "Usuário"
+                                        isEs -> "Usuario"
+                                        else -> "User"
+                                    }
                                     userPhotoUrl = photo
                                     showWelcomeMessage = true
                                     currentScreen = Screen.Parks
                                 }
                             }
                         },
-                        onConnectFacebookClick = { // NUEVA FUNCIONALIDAD
+                        onConnectFacebookClick = {
                             authManager.signInWithFacebook { success, name, photo ->
                                 if (success) {
-                                    userName = name ?: (if (isEs) "Usuario" else "User")
+                                    userName = name ?: when {
+                                        isPt -> "Usuário"
+                                        isEs -> "Usuario"
+                                        else -> "User"
+                                    }
                                     userPhotoUrl = photo
                                     showWelcomeMessage = true
                                     currentScreen = Screen.Parks
@@ -126,14 +139,19 @@ fun App() {
                 }
             }
 
+            // Mensaje de Bienvenida Flotante
             if (showWelcomeMessage) {
-                val welcomePrefix = if (isEs) "¡Bienvenido" else "Welcome"
+                val welcomeText = when {
+                    isPt -> "Bem-vindo"
+                    isEs -> "¡Bienvenido"
+                    else -> "Welcome"
+                }
                 Card(
                     modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
                     elevation = CardDefaults.cardElevation(8.dp)
                 ) {
-                    Text("$welcomePrefix, $userName! ✨", modifier = Modifier.padding(16.dp))
+                    Text("$welcomeText, $userName! ✨", modifier = Modifier.padding(16.dp))
                 }
             }
         }
