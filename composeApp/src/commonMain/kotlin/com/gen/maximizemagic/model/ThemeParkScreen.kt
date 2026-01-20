@@ -2,7 +2,9 @@ package com.gen.maximizemagic.model
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Info
@@ -38,28 +40,61 @@ fun ThemeParksScreen(
 ) {
     val settingsManager = remember { SettingsManager() }
     val isEs = settingsManager.language == "es"
+    val isPt = settingsManager.language == "pt"
     val uriHandler = LocalUriHandler.current
 
-    // Color Dorado (Igual al título)
+    // Estado para el diálogo de ayuda
+    var showHelpDialog by remember { mutableStateOf(false) }
+
+    // Color Dorado institucional
     val magicGold = Color(0xFFD4AF37)
+    val translucency = 0.5f
 
     // --- DICCIONARIO DE TEXTOS ---
-    val txtExit = if (isEs) "Salir" else "Exit"
-    val txtHeader = if (isEs) "Planifica tu Visita" else "Plan your Visit"
-    val txtSelect = if (isEs) "Seleccione un Parque" else "Select a Park"
-    val txtDriveTime = if (isEs) "Tiempo de conducción" else "Driving time"
-    val txtFromHome = if (isEs) "desde tu hogar" else "from home"
-    val txtNoHome = if (isEs) "Configura tu hogar en ajustes" else "Set your home in settings"
-    val txtSettings = if (isEs) "Configuración" else "Settings"
-    val txtHelp = if (isEs) "Ayuda" else "Help"
-    val txtOpen = if (isEs) "Abre:" else "Open:"
-    val txtClose = if (isEs) "Cierra:" else "Close:"
-    val txtRain = if (isEs) "Lluvia:" else "Rain:"
+    val txtExit = when {
+        isPt -> "Sair"
+        isEs -> "Salir"
+        else -> "Exit"
+    }
+    val txtHeader = when {
+        isPt -> "Planeje sua Visita"
+        isEs -> "Planifica tu Visita"
+        else -> "Plan your Visit"
+    }
+    val txtSelect = when {
+        isPt -> "Selecione um Parque"
+        isEs -> "Seleccione un Parque"
+        else -> "Select a Park"
+    }
+    val txtHelpTitle = when {
+        isPt -> "Informação"
+        isEs -> "Información"
+        else -> "Information"
+    }
+    val txtClose = when {
+        isPt -> "Fechar"
+        isEs -> "Cerrar"
+        else -> "Close"
+    }
+    val txtHelpContent = when {
+        isPt -> "Para personalizar sua experiência, em configurações, coloque o endereço onde você ficará e poderá ver as rotas para os parques e o tempo de chegada de sua casa. Para alertas de voos e check-ins, configure seus voos. Por fim, você pode configurar seu idioma entre inglês, português e espanhol."
+        isEs -> "Para personalizar tu experiencia, en configuración, coloca el domicilio donde vas a estar, y podrás ver rutas a los parques y tiempo de llegada desde tu hogar. Para alertas de aviones y checkins configura tus vuelos. Por último puedes configurar tu lenguaje entre Inglés, Portugués y Español."
+        else -> "To customize your experience, in settings, enter the address where you will be staying, and you will be able to see routes to the parks and arrival time from your home. For flight alerts and check-ins, configure your flights. Finally, you can configure your language between English, Portuguese, and Spanish."
+    }
+
+    // (Textos de botones y clima omitidos por brevedad, mantener los anteriores...)
+    val txtOpen = if (isEs) "Abre:" else if (isPt) "Abre:" else "Open:"
+    val txtCloseLabel = if (isEs) "Cierra:" else if (isPt) "Fecha:" else "Close:"
+    val txtRain = if (isEs) "Lluvia:" else if (isPt) "Chuva:" else "Rain:"
+    val txtDriveTime = if (isEs) "Tiempo de conducción" else if (isPt) "Tempo de condução" else "Driving time"
+    val txtFromHome = if (isEs) "desde tu hogar" else if (isPt) "da sua casa" else "from home"
+    val txtNoHome = if (isEs) "Configura tu hogar en ajustes" else if (isPt) "Configure sua casa nos ajustes" else "Set your home in settings"
+    val txtSettings = if (isEs) "Configuración" else if (isPt) "Configurações" else "Settings"
 
     var selectedParkName by remember { mutableStateOf(txtSelect) }
     val selectedInfo = parksMap[selectedParkName]
 
-    // --- LÓGICA DE CLIMA ---
+    // Lógica de Clima
     val api = remember { ParkApi() }
     var weather by remember { mutableStateOf(weatherInfoFromApp) }
     var isLoadingWeather by remember { mutableStateOf(weather == null) }
@@ -71,9 +106,39 @@ fun ThemeParksScreen(
         }
     }
 
-    // --- TIEMPO DE CONDUCCIÓN SIMULADO ---
     val drivingTimeLabel = remember(selectedParkName, settingsManager.homeStreet) {
         if (selectedInfo != null && settingsManager.homeStreet.isNotEmpty()) "${(15..40).random()} min" else null
+    }
+
+    // --- DIÁLOGO DE AYUDA ---
+    if (showHelpDialog) {
+        AlertDialog(
+            onDismissRequest = { showHelpDialog = false },
+            title = {
+                Text(txtHelpTitle, style = MaterialTheme.typography.titleLarge.copy(color = magicGold))
+            },
+            text = {
+                val scroll = rememberScrollState()
+                Column(modifier = Modifier.heightIn(max = 300.dp).verticalScroll(scroll)){
+                    Text(
+                        text = txtHelpContent,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Justify
+                    )
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showHelpDialog = false },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary)
+                ) {
+                    Text(txtClose)
+                }
+            },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+        )
     }
 
     MainLayout(
@@ -83,13 +148,10 @@ fun ThemeParksScreen(
         userPhotoUrl = userPhotoUrl
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. TÍTULO PRINCIPAL (Dorado)
+            // 1. TÍTULO PRINCIPAL
             Text(
                 text = txtHeader,
                 style = MaterialTheme.typography.headlineLarge.copy(
@@ -102,96 +164,66 @@ fun ThemeParksScreen(
             Spacer(Modifier.height(16.dp))
 
             // 2. BARRA DE CLIMA
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(12.dp).fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+            if (weather != null || isLoadingWeather) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = translucency),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    if (isLoadingWeather) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                    } else if (weather != null) {
-                        val w = weather!!
-                        Text("📍 Orlando, FL", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(
+                        modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (isLoadingWeather) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else if (weather != null) {
+                            val w = weather!!
+                            Text("📍 Orlando, FL", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = "🌡️ ${w.currentTemp}°C", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+                                Spacer(Modifier.width(12.dp))
+                                Text("🌧️ $txtRain ${w.rainChance}%", style = MaterialTheme.typography.bodyMedium)
+                            }
                             Text(
-                                text = "🌡️ ${w.currentTemp}°C",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.ExtraBold
+                                text = "⬇️ ${w.minTemp}°C | ⬆️ ${w.maxTemp}°C | ${w.conditionText}",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
+                                textAlign = TextAlign.Center
                             )
-                            Spacer(Modifier.width(12.dp))
-                            Text("🌧️ $txtRain ${w.rainChance}%", style = MaterialTheme.typography.bodyMedium)
                         }
-                        Text(
-                            text = "⬇️ ${w.minTemp}°C | ⬆️ ${w.maxTemp}°C | ${w.conditionText}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
-                            textAlign = TextAlign.Center
-                        )
                     }
                 }
             }
 
             Spacer(Modifier.height(16.dp))
 
-            // 3. SELECTOR DE PARQUES (Color igual a los botones y Font Magic)
+            // 3. SELECTOR DE PARQUES
             var expanded by remember { mutableStateOf(false) }
             Box(Modifier.fillMaxWidth()) {
                 Card(
                     onClick = { expanded = true },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                    )
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp).fillMaxSize(),
                         Arrangement.SpaceBetween,
                         Alignment.CenterVertically
                     ) {
-                        // TEXTO SELECCIONADO CON FUENTE MAGIC
                         Text(
                             text = selectedParkName,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontSize = 20.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Center
-                            ),
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, color = magicGold, textAlign = TextAlign.Center),
                             modifier = Modifier.weight(1f)
                         )
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = null,
-                            tint = Color.White
-                        )
+                        Icon(Icons.Default.ArrowDropDown, null, tint = Color.White)
                     }
                 }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier.fillMaxWidth(0.9f)
-                ) {
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.fillMaxWidth(0.9f)) {
                     parksMap.keys.forEach { name ->
                         DropdownMenuItem(
-                            text = {
-                                // ITEMS DE LA LISTA CON FUENTE MAGIC
-                                Text(
-                                    text = name,
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontSize = 18.sp,
-                                        textAlign = TextAlign.Center
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            },
-                            onClick = {
-                                selectedParkName = name
-                                expanded = false
-                            }
+                            text = { Text(name, style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp, color = magicGold, textAlign = TextAlign.Center), modifier = Modifier.fillMaxWidth()) },
+                            onClick = { selectedParkName = name; expanded = false }
                         )
                     }
                 }
@@ -206,57 +238,31 @@ fun ThemeParksScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // BOTÓN 1: HORARIOS / TIEMPOS DE ESPERA
                     Button(
                         onClick = { onNavigateToDetail(selectedParkName, selectedInfo) },
-                        modifier = Modifier.fillMaxWidth().height(70.dp), // Más alto para que entren bien las letras
+                        modifier = Modifier.fillMaxWidth().height(70.dp),
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                        )
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "$txtOpen ${selectedInfo.openingHours} - $txtClose ${selectedInfo.closingHours}",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = if (isEs) "Ver Tiempos de Espera" else "View Wait Times",
-                                fontSize = 11.sp,
-                                textAlign = TextAlign.Center
-                            )
+                            Text("$txtOpen ${selectedInfo.openingHours} - $txtCloseLabel ${selectedInfo.closingHours}", fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                            Text(if (isEs) "Ver Tiempos de Espera" else if (isPt) "Ver Tempos de Espera" else "View Wait Times", fontSize = 11.sp, textAlign = TextAlign.Center)
                         }
                     }
 
-                    // BOTÓN 2: TIEMPO DE CONDUCCIÓN
                     Button(
                         onClick = {
                             if (settingsManager.homeStreet.isNotEmpty()) {
                                 val home = "${settingsManager.homeStreet} ${settingsManager.homeNumber}, ${settingsManager.homeCity}"
-                                val url = "https://www.google.com/maps/dir/?api=1&origin=$home&destination=${selectedInfo.tollPlazaCoords}&travelmode=driving"
-                                uriHandler.openUri(url.replace(" ", "+"))
-                            } else {
-                                onNavigateToSettings()
-                            }
+                                uriHandler.openUri("https://www.google.com/maps/dir/?api=1&origin=${home.replace(" ", "+")}&destination=${selectedInfo.tollPlazaCoords}&travelmode=driving")
+                            } else { onNavigateToSettings() }
                         },
-                        modifier = Modifier.fillMaxWidth().height(70.dp), // Más alto para que entren bien las letras
+                        modifier = Modifier.fillMaxWidth().height(70.dp),
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                        )
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
                     ) {
-                        val driveText = if (drivingTimeLabel != null)
-                            "🚗 $txtDriveTime: $drivingTimeLabel $txtFromHome"
-                        else "📍 $txtNoHome"
-
-                        Text(
-                            text = driveText,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
+                        val driveText = if (drivingTimeLabel != null) "🚗 $txtDriveTime: $drivingTimeLabel $txtFromHome" else "📍 $txtNoHome"
+                        Text(driveText, fontSize = 14.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                     }
                 }
             }
@@ -266,35 +272,21 @@ fun ThemeParksScreen(
             // 5. PARTE INFERIOR: CONFIGURACIÓN Y AYUDA
             Box(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                 Row(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onNavigateToSettings() }
-                        .padding(8.dp),
+                    modifier = Modifier.align(Alignment.CenterStart).clip(RoundedCornerShape(12.dp)).clickable { onNavigateToSettings() }.padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp),
-                        tint = magicGold
-                    )
+                    Icon(Icons.Default.Settings, null, modifier = Modifier.size(24.dp), tint = magicGold)
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = txtSettings,
-                        color = magicGold,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Text(txtSettings, color = magicGold, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 }
 
                 FloatingActionButton(
-                    onClick = { /* Ayuda */ },
+                    onClick = { showHelpDialog = true },
                     modifier = Modifier.align(Alignment.CenterEnd).size(48.dp),
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f),
                     contentColor = MaterialTheme.colorScheme.primary
                 ) {
-                    Icon(Icons.Default.Info, contentDescription = txtHelp)
+                    Icon(Icons.Default.Info, contentDescription = "Help")
                 }
             }
         }

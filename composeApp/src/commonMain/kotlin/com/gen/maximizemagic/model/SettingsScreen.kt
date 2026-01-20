@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.gen.maximizemagic.ui.MainLayout
 import com.gen.maximizemagic.ui.layout.MainLayout
 import kotlinx.coroutines.delay
 import kotlinx.datetime.*
@@ -27,7 +26,9 @@ fun SettingsScreen(
 ) {
     val settingsManager = remember { SettingsManager() }
     var currentLanguage by remember { mutableStateOf(settingsManager.language) }
+
     val isEs = currentLanguage == "es"
+    val isPt = currentLanguage == "pt"
 
     var showHomeDialog by remember { mutableStateOf(false) }
     var showArrivalDialog by remember { mutableStateOf(false) }
@@ -35,44 +36,67 @@ fun SettingsScreen(
     var showLanguageDialog by remember { mutableStateOf(false) }
     var checkInNotice by remember { mutableStateOf<String?>(null) }
 
+    // --- DICCIONARIO TRILINGÜE ---
     val texts = remember(currentLanguage) {
-        if (isEs) mapOf(
-            "title" to "Configuración",
-            "header" to "Configuración Personal",
-            "home" to "Configurar Hogar",
-            "arrival" to "Vuelo de Ida",
-            "departure" to "Vuelo de Vuelta",
-            "lang" to "Idioma",
-            "agenda" to "Agenda Parques",
-            "save" to "Guardar",
-            "cancel" to "Cancelar",
-            "street" to "Calle",
-            "number" to "Altura",
-            "city" to "Ciudad",
-            "select_lang" to "Seleccionar Idioma",
-            "flight_num" to "Nro de Vuelo",
-            "date" to "Fecha (AAAA-MM-DD)",
-            "time" to "Hora (HH:MM)",
-            "checkin_msg" to "¡Atención! Ya puedes hacer el Check-in: "
-        ) else mapOf(
-            "title" to "Settings",
-            "header" to "Personal Settings",
-            "home" to "Configure Home",
-            "arrival" to "Arrival Flight",
-            "departure" to "Departure Flight",
-            "lang" to "Language",
-            "agenda" to "Park Schedule",
-            "save" to "Save",
-            "cancel" to "Cancel",
-            "street" to "Street",
-            "number" to "Number",
-            "city" to "City",
-            "select_lang" to "Select Language",
-            "flight_num" to "Flight Number",
-            "date" to "Date (YYYY-MM-DD)",
-            "time" to "Time (HH:MM)",
-            "checkin_msg" to "Attention! Check-in open for: "
-        )
+        when (currentLanguage) {
+            "pt" -> mapOf(
+                "title" to "Configurações",
+                "header" to "Configurações Pessoais",
+                "home" to "Configurar Casa",
+                "arrival" to "Voo de Ida",
+                "departure" to "Voo de Volta",
+                "lang" to "Idioma",
+                "agenda" to "Agenda Parques",
+                "save" to "Salvar",
+                "cancel" to "Cancelar",
+                "street" to "Rua",
+                "number" to "Número",
+                "city" to "Cidade",
+                "select_lang" to "Selecionar Idioma",
+                "flight_num" to "Nº do Voo",
+                "date" to "Data (AAAA-MM-DD)",
+                "time" to "Hora (HH:MM)",
+                "checkin_msg" to "Atenção! Check-in aberto para: "
+            )
+            "es" -> mapOf(
+                "title" to "Configuración",
+                "header" to "Configuración Personal",
+                "home" to "Configurar Hogar",
+                "arrival" to "Vuelo de Ida",
+                "departure" to "Vuelo de Vuelta",
+                "lang" to "Idioma",
+                "agenda" to "Agenda Parques",
+                "save" to "Guardar",
+                "cancel" to "Cancelar",
+                "street" to "Calle",
+                "number" to "Altura",
+                "city" to "Ciudad",
+                "select_lang" to "Seleccionar Idioma",
+                "flight_num" to "Nro de Vuelo",
+                "date" to "Fecha (AAAA-MM-DD)",
+                "time" to "Hora (HH:MM)",
+                "checkin_msg" to "¡Atención! Ya puedes hacer el Check-in: "
+            )
+            else -> mapOf(
+                "title" to "Settings",
+                "header" to "Personal Settings",
+                "home" to "Configure Home",
+                "arrival" to "Arrival Flight",
+                "departure" to "Departure Flight",
+                "lang" to "Language",
+                "agenda" to "Park Schedule",
+                "save" to "Save",
+                "cancel" to "Cancel",
+                "street" to "Street",
+                "number" to "Number",
+                "city" to "City",
+                "select_lang" to "Select Language",
+                "flight_num" to "Flight Number",
+                "date" to "Date (YYYY-MM-DD)",
+                "time" to "Time (HH:MM)",
+                "checkin_msg" to "Attention! Check-in open for: "
+            )
+        }
     }
 
     LaunchedEffect(checkInNotice) {
@@ -107,7 +131,7 @@ fun SettingsScreen(
             ) {
                 Text(text = texts["header"]!!, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
 
-                // 1. Botón Hogar (Muestra la dirección configurada para la Toll Plaza)
+                // 1. Botón Hogar
                 Button(onClick = { showHomeDialog = true }, modifier = Modifier.fillMaxWidth().height(56.dp)) {
                     val street = settingsManager.homeStreet
                     val city = settingsManager.homeCity
@@ -137,10 +161,15 @@ fun SettingsScreen(
                     Text(if (f.isEmpty()) "🛬 ${texts["departure"]}" else "🛬 $f (${settingsManager.departureDate})")
                 }
 
-                // 5. Idioma
+                // 5. Idioma (Actualizado para mostrar Portugués)
                 Button(onClick = { showLanguageDialog = true }, modifier = Modifier.fillMaxWidth().height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)) {
-                    Text("🌐 ${texts["lang"]}: ${if (isEs) "Español" else "English"}")
+                    val langDisplay = when(currentLanguage) {
+                        "es" -> "Español"
+                        "pt" -> "Português"
+                        else -> "English"
+                    }
+                    Text("🌐 ${texts["lang"]}: $langDisplay")
                 }
             }
         }
@@ -190,7 +219,7 @@ fun SettingsScreen(
     if (showArrivalDialog) FlightDialog(true) { showArrivalDialog = false }
     if (showDepartureDialog) FlightDialog(false) { showDepartureDialog = false }
 
-    // --- DIÁLOGO HOGAR (CORREGIDO PARA TOLL PLAZA) ---
+    // --- DIÁLOGO HOGAR ---
     if (showHomeDialog) {
         var tempStreet by remember { mutableStateOf(settingsManager.homeStreet) }
         var tempNumber by remember { mutableStateOf(settingsManager.homeNumber) }
@@ -203,18 +232,8 @@ fun SettingsScreen(
             title = { Text(texts["home"]!!, fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = tempStreet,
-                        onValueChange = { tempStreet = it },
-                        label = { Text(texts["street"]!!) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = tempNumber,
-                        onValueChange = { tempNumber = it },
-                        label = { Text(texts["number"]!!) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    OutlinedTextField(value = tempStreet, onValueChange = { tempStreet = it }, label = { Text(texts["street"]!!) }, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = tempNumber, onValueChange = { tempNumber = it }, label = { Text(texts["number"]!!) }, modifier = Modifier.fillMaxWidth())
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
                             value = tempCity,
@@ -224,19 +243,9 @@ fun SettingsScreen(
                             trailingIcon = { Icon(Icons.Default.ArrowDropDown, null, Modifier.clickable { cityExpanded = true }) },
                             modifier = Modifier.fillMaxWidth()
                         )
-                        DropdownMenu(
-                            expanded = cityExpanded,
-                            onDismissRequest = { cityExpanded = false },
-                            modifier = Modifier.fillMaxWidth(0.7f)
-                        ) {
+                        DropdownMenu(expanded = cityExpanded, onDismissRequest = { cityExpanded = false }, modifier = Modifier.fillMaxWidth(0.7f)) {
                             cities.forEach { c ->
-                                DropdownMenuItem(
-                                    text = { Text(c) },
-                                    onClick = {
-                                        tempCity = c
-                                        cityExpanded = false
-                                    }
-                                )
+                                DropdownMenuItem(text = { Text(c) }, onClick = { tempCity = c; cityExpanded = false })
                             }
                         }
                     }
@@ -244,10 +253,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 Button(onClick = {
-                    // Guardado granular para que ThemeParksScreen pueda construir la ruta a la Toll Plaza
-                    settingsManager.homeStreet = tempStreet
-                    settingsManager.homeNumber = tempNumber
-                    settingsManager.homeCity = tempCity
+                    settingsManager.homeStreet = tempStreet; settingsManager.homeNumber = tempNumber; settingsManager.homeCity = tempCity
                     showHomeDialog = false
                 }) { Text(texts["save"]!!) }
             },
@@ -255,6 +261,7 @@ fun SettingsScreen(
         )
     }
 
+    // --- DIÁLOGO IDIOMA (CON PORTUGUÉS) ---
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
@@ -267,6 +274,11 @@ fun SettingsScreen(
                     HorizontalDivider()
                     ListItem(headlineContent = { Text("English") }, modifier = Modifier.clickable {
                         settingsManager.language = "en"; currentLanguage = "en"; showLanguageDialog = false
+                    })
+                    HorizontalDivider()
+                    // OPCIÓN PORTUGUÉS RESTAURADA
+                    ListItem(headlineContent = { Text("Português") }, modifier = Modifier.clickable {
+                        settingsManager.language = "pt"; currentLanguage = "pt"; showLanguageDialog = false
                     })
                 }
             },

@@ -56,26 +56,7 @@ data class OrlandoWeather(
     val conditionText: String
 )
 
-// --- MODELOS PARA THEMEPARKS.WIKI (Epic Universe) ---
-@Serializable
-data class WikiParkResponse(val liveData: List<WikiAttraction> = emptyList())
-
-@Serializable
-data class WikiAttraction(
-    val id: String,
-    val name: String,
-    val entityType: String,
-    val status: String? = null,
-    val queue: WikiQueue? = null
-)
-
-@Serializable
-data class WikiQueue(val STANDBY: WikiWaitTime? = null)
-
-@Serializable
-data class WikiWaitTime(val waitTime: Int? = null)
-
-// --- MODELOS PARA QUEUE-TIMES (Parques actuales) ---
+// --- MODELOS PARA QUEUE-TIMES (API UNIFICADA) ---
 @Serializable
 data class QueueTimesResponse(
     val lands: List<Land> = emptyList(),
@@ -83,21 +64,27 @@ data class QueueTimesResponse(
 )
 
 @Serializable
-data class Land(val name: String = "", val rides: List<AttractionAlternative> = emptyList())
+data class Land(
+    val name: String = "",
+    val rides: List<AttractionAlternative> = emptyList()
+)
 
 @Serializable
 data class AttractionAlternative(
     val id: Int,
     val name: String,
-    val is_open: Boolean = false,
-    val wait_time: Int = 0,
-    val last_updated: String = ""
+    @SerialName("is_open") val is_open: Boolean = false,
+    @SerialName("wait_time") val wait_time: Int = 0,
+    @SerialName("last_updated") val last_updated: String = ""
 )
 
 class ParkApi {
     private val client = HttpClient {
         install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true; coerceInputValues = true })
+            json(Json {
+                ignoreUnknownKeys = true
+                coerceInputValues = true
+            })
         }
         install(HttpTimeout) {
             requestTimeoutMillis = 15000
@@ -133,33 +120,35 @@ class ParkApi {
     }
 
     /**
-     * 2. DATOS EPIC UNIVERSE (Themeparks.wiki)
+     * 2. DATOS EPIC UNIVERSE (Queue-Times.com ID 334)
+     * Epic Universe usa una estructura basada en LANDS.
      */
     suspend fun getEpicUniverseData(): QueueTimesResponse? {
         return try {
-            val url = "https://api.themeparks.wiki/v1/entity/64309322-a96b-4f9e-a0e0-82601705e468/live"
-            val resp = client.get(url).body<WikiParkResponse>()
-            val rides = resp.liveData.filter { it.entityType == "ATTRACTION" }.map {
-                AttractionAlternative(
-                    id = it.id.hashCode(),
-                    name = it.name,
-                    is_open = it.status == "OPERATING",
-                    wait_time = it.queue?.STANDBY?.waitTime ?: 0
-                )
-            }
-            QueueTimesResponse(rides = rides)
-        } catch (e: Exception) { null }
+            // ID 334 es el asignado por Queue-Times a Universal Epic Universe
+            val url = "https://queue-times.com/parks/334/queue_times.json"
+            client.get(url).body<QueueTimesResponse>()
+        } catch (e: Exception) {
+            println("#MaximizeMagic: Error Epic Universe -> ${e.message}")
+            null
+        }
     }
 
     /**
-     * 3. DATOS GENERALES DE PARQUES
+     * 3. DATOS GENERALES DE PARQUES (Queue-Times.com)
      */
     suspend fun getParkData(parkId: String): QueueTimesResponse? {
-        // Redirección automática si es el ID de Epic Universe
-        if (parkId == "epic-wiki") return getEpicUniverseData()
+        // Redirección automática si es el ID de Epic Universe definido en App.kt
+        if (parkId == "epic-wiki" || parkId == "334") {
+            return getEpicUniverseData()
+        }
 
         return try {
-            client.get("https://queue-times.com/parks/$parkId/queue_times.json").body<QueueTimesResponse>()
-        } catch (e: Exception) { null }
+            val url = "https://queue-times.com/parks/$parkId/queue_times.json"
+            client.get(url).body<QueueTimesResponse>()
+        } catch (e: Exception) {
+            println("#MaximizeMagic: Error ParkData ($parkId) -> ${e.message}")
+            null
+        }
     }
 }

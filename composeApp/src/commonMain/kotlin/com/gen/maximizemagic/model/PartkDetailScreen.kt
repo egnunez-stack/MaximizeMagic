@@ -43,6 +43,7 @@ fun ParkDetailScreen(
     val settingsManager = remember { SettingsManager() }
     val isEs = settingsManager.language == "es"
 
+    // --- DICCIONARIO ---
     val txtSearch = if (isEs) "Buscar atracción..." else "Search attraction..."
     val txtHideClosed = if (isEs) "Ocultar cerradas" else "Hide closed"
     val txtSortWait = if (isEs) "Más espera primero" else "Wait time: High to Low"
@@ -50,8 +51,8 @@ fun ParkDetailScreen(
     val txtWaitMin = if (isEs) "min" else "min"
     val txtClosed = if (isEs) "Cerrado" else "Closed"
     val txtMagicRec = if (isEs) "✨ Recomendación Mágica" else "✨ Magic Recommendation"
-    val txtGoNow = if (isEs) "¡Ve ahora!" else "Go now!"
     val txtDirections = if (isEs) "Seleccionar punto de inicio" else "Select starting point"
+    val txtPoweredBy = "Powered by Queue-Times.com"
 
     var showRouteDialog by remember { mutableStateOf(false) }
     var selectedRideForRoute by remember { mutableStateOf<AttractionAlternative?>(null) }
@@ -59,10 +60,19 @@ fun ParkDetailScreen(
     var hideClosed by remember { mutableStateOf(false) }
     var sortByWaitTime by remember { mutableStateOf(false) }
 
+    // --- LÓGICA DE CARGA DE API ---
     LaunchedEffect(parkId) {
         try {
             isLoading = true
-            parkData = if (parkName.contains("Epic", ignoreCase = true)) api.getEpicUniverseData() else api.getParkData(parkId)
+            // Si el nombre contiene "Epic", usamos la nueva lógica para la API de Queue-Times (ID 334)
+            if (parkName.contains("Epic", ignoreCase = true)) {
+                // Suponiendo que tienes esta función en tu ParkApi o la llamas directamente
+                parkData = api.getEpicUniverseData()
+            } else {
+                parkData = api.getParkData(parkId)
+            }
+        } catch (e: Exception) {
+            println("#MaximizeMagic: Error cargando datos: ${e.message}")
         } finally {
             isLoading = false
         }
@@ -138,15 +148,17 @@ fun ParkDetailScreen(
             } else if (parkData == null) {
                 Box(Modifier.fillMaxSize(), Alignment.Center) { Text(txtNoData) }
             } else {
+                // Aplanar la lista de atracciones (Epic Universe viene por lands)
                 val allRidesRaw = (parkData!!.rides + parkData!!.lands.flatMap { it.rides })
+
                 val allFilteredRides = allRidesRaw.filter { ride ->
                     val matchesSearch = ride.name.contains(searchQuery, ignoreCase = true)
                     val matchesOpen = if (hideClosed) ride.is_open else true
                     matchesSearch && matchesOpen
                 }.let { if (sortByWaitTime) it.sortedByDescending { r -> r.wait_time } else it }
 
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    // 1. RECOMENDACIÓN MÁGICA (ESTILIZADA)
+                LazyColumn(modifier = Modifier.fillMaxSize().weight(1f)) {
+                    // 1. RECOMENDACIÓN MÁGICA
                     if (searchQuery.isEmpty() && !sortByWaitTime) {
                         val recommendation = allRidesRaw.filter { it.is_open && it.wait_time > 0 }.minByOrNull { it.wait_time }
                         if (recommendation != null) {
@@ -160,11 +172,10 @@ fun ParkDetailScreen(
                                 ) {
                                     Column(Modifier.padding(16.dp)) {
                                         Text(txtMagicRec, fontWeight = FontWeight.Bold, color = Color(0xFFFBC02D))
-                                        // NOMBRE EN DORADO Y FUENTE MAGIC
                                         Text(
                                             text = recommendation.name,
                                             style = MaterialTheme.typography.titleLarge.copy(
-                                                color = magicGold,
+                                                color = magicGold, // DORADO
                                                 fontSize = 22.sp
                                             )
                                         )
@@ -181,7 +192,7 @@ fun ParkDetailScreen(
                             attraction = attraction,
                             waitSuffix = txtWaitMin,
                             closedText = txtClosed,
-                            magicGold = magicGold, // Pasamos el color dorado
+                            magicGold = magicGold,
                             onClick = {
                                 selectedRideForRoute = attraction
                                 showRouteDialog = true
@@ -190,6 +201,15 @@ fun ParkDetailScreen(
                         HorizontalDivider(thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
                     }
                 }
+
+                // 3. PIE DE PÁGINA (Créditos API - Obligatorio)
+                Text(
+                    text = txtPoweredBy,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    textAlign = TextAlign.Center,
+                    color = Color.Gray
+                )
             }
         }
     }
@@ -200,7 +220,7 @@ fun RideRow(
     attraction: AttractionAlternative,
     waitSuffix: String,
     closedText: String,
-    magicGold: Color, // Parámetro añadido
+    magicGold: Color,
     onClick: () -> Unit
 ) {
     Row(
@@ -211,11 +231,10 @@ fun RideRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.weight(1f)) {
-            // CAMBIO: Estilo Magic y color Dorado aplicado aquí
             Text(
                 text = attraction.name,
                 style = MaterialTheme.typography.titleLarge.copy(
-                    color = magicGold,
+                    color = magicGold, // DORADO
                     fontSize = 18.sp
                 )
             )
