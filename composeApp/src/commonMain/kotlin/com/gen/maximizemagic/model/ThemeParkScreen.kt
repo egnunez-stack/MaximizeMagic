@@ -70,7 +70,8 @@ fun ThemeParksScreen(
         else -> "To customize your experience, in settings, enter the address where you will be staying and see routes to the parks."
     }
 
-    var selectedParkName by remember { mutableStateOf(txtSelect) }
+    // Inicializamos con el texto traducido correctamente
+    var selectedParkName by remember(txtSelect) { mutableStateOf(txtSelect) }
     val selectedInfo = parksMap[selectedParkName]
 
     val api = remember { ParkApi() }
@@ -88,7 +89,6 @@ fun ThemeParksScreen(
         if (selectedInfo != null && settingsManager.homeStreet.isNotEmpty()) "${(15..40).random()} min" else null
     }
 
-    // --- DIÁLOGO DE AYUDA ---
     if (showHelpDialog) {
         AlertDialog(
             onDismissRequest = { showHelpDialog = false },
@@ -109,7 +109,7 @@ fun ThemeParksScreen(
     }
 
     MainLayout(
-        title = txtExit, // Se verá en la barra azul con letras blancas
+        title = txtExit,
         showBackButton = true,
         onBackClick = onBack,
         userPhotoUrl = userPhotoUrl
@@ -161,7 +161,7 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 3. SELECTOR DE PARQUES
+            // 3. SELECTOR DE PARQUES (CORREGIDO: Tipografía Magic + Color Blanco)
             var expanded by remember { mutableStateOf(false) }
             Box(Modifier.fillMaxWidth()) {
                 Card(
@@ -176,9 +176,10 @@ fun ThemeParksScreen(
                     ) {
                         Text(
                             text = selectedParkName,
-                            style = MaterialTheme.typography.titleLarge.copy(
+                            // Aplicamos tipografía Magic (headlineLarge) pero en color blanco
+                            style = MaterialTheme.typography.headlineLarge.copy(
                                 color = Color.White,
-                                fontSize = 20.sp,
+                                fontSize = 20.sp, // Tamaño ajustado para el selector
                                 textAlign = TextAlign.Center
                             ),
                             modifier = Modifier.weight(1f)
@@ -187,21 +188,22 @@ fun ThemeParksScreen(
                     }
                 }
 
-                // --- MENÚ DESPLEGABLE TRASLÚCIDO AZUL ---
+                // MENÚ DESPLEGABLE TRASLÚCIDO AZUL
                 DropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)) // Fondo azul traslúcido
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
                 ) {
                     parksMap.keys.forEach { name ->
                         DropdownMenuItem(
                             text = {
                                 Text(
                                     text = name,
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        color = Color.White, // Letras Blancas
+                                    // Aplicamos tipografía Magic (headlineLarge) pero en color blanco para los items
+                                    style = MaterialTheme.typography.headlineLarge.copy(
+                                        color = Color.White,
                                         fontSize = 18.sp,
                                         textAlign = TextAlign.Center
                                     ),
@@ -250,14 +252,9 @@ fun ThemeParksScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // 5. CONFIGURACIÓN Y AYUDA
             Box(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                 Row(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onNavigateToSettings() }
-                        .padding(8.dp),
+                    modifier = Modifier.align(Alignment.CenterStart).clip(RoundedCornerShape(12.dp)).clickable { onNavigateToSettings() }.padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.Settings, null, modifier = Modifier.size(24.dp), tint = magicGold)
