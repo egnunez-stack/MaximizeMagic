@@ -49,10 +49,11 @@ fun MainLayout(
                         title = {
                             Text(
                                 text = title,
-                                // Forzamos color blanco y tipografía Magic (titleLarge)
-                                style = MaterialTheme.typography.titleLarge.copy(
+                                // USAMOS headlineLarge para que tenga la fuente "Magic"
+                                // y forzamos el color Blanco.
+                                style = MaterialTheme.typography.headlineLarge.copy(
                                     color = Color.White,
-                                    fontSize = 20.sp
+                                    fontSize = 22.sp // Ajustado para que quepa bien en la barra
                                 )
                             )
                         },
@@ -62,7 +63,7 @@ fun MainLayout(
                                     Icon(
                                         imageVector = Icons.Default.ArrowBack,
                                         contentDescription = "Back",
-                                        tint = Color.White // Icono blanco
+                                        tint = Color.White // Flecha blanca
                                     )
                                 }
                             } else {
@@ -101,7 +102,7 @@ fun ProfileSection(userPhotoUrl: String?) {
             .padding(end = 8.dp)
             .size(36.dp)
             .clip(CircleShape)
-            // Fondo traslúcido para que la foto resalte sobre el azul
+            // Fondo traslúcido suave
             .background(Color.White.copy(alpha = 0.2f)),
         contentAlignment = Alignment.Center
     ) {

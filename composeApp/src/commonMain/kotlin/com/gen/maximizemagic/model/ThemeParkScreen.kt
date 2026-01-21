@@ -50,7 +50,9 @@ fun ThemeParksScreen(
     val translucency = 0.3f
 
     // --- DICCIONARIO DE TEXTOS ---
-    val txtExit = when { isPt -> "Sair"; isEs -> "Salir"; else -> "Exit" }
+    // CAMBIO: Ahora el título de la barra siempre es el nombre de la App
+    val txtAppName = "Maximize the Magic"
+
     val txtHeader = when { isPt -> "Planeje sua Visita"; isEs -> "Planifica tu Visita"; else -> "Plan your Visit" }
     val txtSelect = when { isPt -> "Selecione um Parque"; isEs -> "Seleccione un Parque"; else -> "Select a Park" }
     val txtHelpTitle = when { isPt -> "Informação"; isEs -> "Información"; else -> "Information" }
@@ -70,7 +72,6 @@ fun ThemeParksScreen(
         else -> "To customize your experience, in settings, enter the address where you will be staying and see routes to the parks."
     }
 
-    // Inicializamos con el texto traducido correctamente
     var selectedParkName by remember(txtSelect) { mutableStateOf(txtSelect) }
     val selectedInfo = parksMap[selectedParkName]
 
@@ -109,7 +110,7 @@ fun ThemeParksScreen(
     }
 
     MainLayout(
-        title = txtExit,
+        title = txtAppName, // CAMBIO: Usamos el nombre de la app con fuente Magic (configurada en MainLayout)
         showBackButton = true,
         onBackClick = onBack,
         userPhotoUrl = userPhotoUrl
@@ -118,7 +119,7 @@ fun ThemeParksScreen(
             modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. TÍTULO PRINCIPAL
+            // 1. TÍTULO PRINCIPAL (Dorado + Magic)
             Text(
                 text = txtHeader,
                 style = MaterialTheme.typography.headlineLarge.copy(
@@ -161,7 +162,7 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 3. SELECTOR DE PARQUES (CORREGIDO: Tipografía Magic + Color Blanco)
+            // 3. SELECTOR DE PARQUES (Tipografía Magic + Color Blanco)
             var expanded by remember { mutableStateOf(false) }
             Box(Modifier.fillMaxWidth()) {
                 Card(
@@ -176,10 +177,9 @@ fun ThemeParksScreen(
                     ) {
                         Text(
                             text = selectedParkName,
-                            // Aplicamos tipografía Magic (headlineLarge) pero en color blanco
                             style = MaterialTheme.typography.headlineLarge.copy(
                                 color = Color.White,
-                                fontSize = 20.sp, // Tamaño ajustado para el selector
+                                fontSize = 20.sp,
                                 textAlign = TextAlign.Center
                             ),
                             modifier = Modifier.weight(1f)
@@ -201,7 +201,6 @@ fun ThemeParksScreen(
                             text = {
                                 Text(
                                     text = name,
-                                    // Aplicamos tipografía Magic (headlineLarge) pero en color blanco para los items
                                     style = MaterialTheme.typography.headlineLarge.copy(
                                         color = Color.White,
                                         fontSize = 18.sp,
