@@ -21,6 +21,7 @@ import org.jetbrains.compose.resources.painterResource
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainLayout(
     title: String,
@@ -37,50 +38,54 @@ fun MainLayout(
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-                alpha = 0.2f // Transparencia para que el contenido sea legible
+                alpha = 0.2f
             )
 
             Scaffold(
-                containerColor = Color.Transparent, // Importante para ver el fondo
+                containerColor = Color.Transparent,
                 topBar = {
-                    Surface(
-                        shadowElevation = 4.dp,
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .statusBarsPadding()
-                                .height(64.dp)
-                                .padding(horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // BOTÓN ATRÁS
+                    // CONFIGURACIÓN DE TOP BAR AZUL CON LETRAS BLANCAS
+                    CenterAlignedTopAppBar(
+                        title = {
+                            Text(
+                                text = title,
+                                // Forzamos color blanco y tipografía Magic (titleLarge)
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    color = Color.White,
+                                    fontSize = 20.sp
+                                )
+                            )
+                        },
+                        navigationIcon = {
                             if (showBackButton) {
                                 IconButton(onClick = onBackClick) {
-                                    Icon(Icons.Default.ArrowBack, "Back", tint = MaterialTheme.colorScheme.primary)
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowBack,
+                                        contentDescription = "Back",
+                                        tint = Color.White // Icono blanco
+                                    )
                                 }
                             } else {
-                                // LOGO DE LA APP (logoApp.png) en lugar de espacio vacío
+                                // Logo de la App si no hay botón atrás
                                 Image(
                                     painter = painterResource(Res.drawable.logoApp),
                                     contentDescription = "Logo",
-                                    modifier = Modifier.size(40.dp).padding(start = 8.dp)
+                                    modifier = Modifier.size(36.dp).padding(start = 8.dp)
                                 )
                             }
-
-                            // TÍTULO
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-                                maxLines = 1
-                            )
-
-                            // FOTO DE PERFIL
+                        },
+                        actions = {
+                            // Foto de perfil a la derecha
                             ProfileSection(userPhotoUrl)
-                        }
-                    }
+                        },
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                            // FONDO AZUL (Color Primario del Tema)
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            titleContentColor = Color.White,
+                            navigationIconContentColor = Color.White,
+                            actionIconContentColor = Color.White
+                        )
+                    )
                 }
             ) { paddingValues ->
                 content(paddingValues)
@@ -94,9 +99,10 @@ fun ProfileSection(userPhotoUrl: String?) {
     Box(
         modifier = Modifier
             .padding(end = 8.dp)
-            .size(40.dp)
+            .size(36.dp)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primaryContainer),
+            // Fondo traslúcido para que la foto resalte sobre el azul
+            .background(Color.White.copy(alpha = 0.2f)),
         contentAlignment = Alignment.Center
     ) {
         if (!userPhotoUrl.isNullOrEmpty()) {
@@ -105,11 +111,11 @@ fun ProfileSection(userPhotoUrl: String?) {
                 contentDescription = "Perfil",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                onLoading = { CircularProgressIndicator(modifier = Modifier.size(16.dp)) },
-                onFailure = { Text("👤", fontSize = 16.sp) }
+                onLoading = { CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White) },
+                onFailure = { Text("👤", fontSize = 16.sp, color = Color.White) }
             )
         } else {
-            Text("👤", fontSize = 18.sp)
+            Text("👤", fontSize = 18.sp, color = Color.White)
         }
     }
 }

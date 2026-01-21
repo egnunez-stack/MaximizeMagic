@@ -62,11 +62,12 @@ fun ThemeParksScreen(
     val txtFromHome = if (isEs) "desde tu hogar" else if (isPt) "da sua casa" else "from home"
     val txtNoHome = if (isEs) "Configura tu hogar en ajustes" else if (isPt) "Configure sua casa nos ajustes" else "Set your home in settings"
     val txtSettings = if (isEs) "Configuración" else if (isPt) "Configurações" else "Settings"
+    val txtHoursWait = if (isEs) "Horarios / Espera" else if (isPt) "Horários / Espera" else "Hours / Wait"
 
     val txtHelpContent = when {
-        isPt -> "Para personalizar sua experiência, em configurações, coloque o endereço onde você ficará e poderá ver as rotas para os parques e o tempo de chegada de sua casa. Para alertas de voos e check-ins, configure seus voos. Por fim, você pode configurar seu idioma entre inglês, português e espanhol."
-        isEs -> "Para personalizar tu experiencia, en configuración, coloca el domicilio donde vas a estar, y podrás ver rutas a los parques y tiempo de llegada desde tu hogar. Para alertas de aviones y checkins configura tus vuelos. Por último puedes configurar tu lenguaje entre Inglés, Portugués y Español."
-        else -> "To customize your experience, in settings, enter the address where you will be staying, and you will be able to see routes to the parks and arrival time from your home. For flight alerts and check-ins, configure your flights. Finally, you can configure your language between English, Portuguese, and Spanish."
+        isPt -> "Para personalizar sua experiência, em configurações, coloque o endereço onde você ficará e poderá ver as rotas para os parques e o tempo de chegada de sua casa."
+        isEs -> "Para personalizar tu experiencia, en configuración, coloca el domicilio donde vas a estar, y podrás ver rutas a los parques y tiempo de llegada desde tu hogar."
+        else -> "To customize your experience, in settings, enter the address where you will be staying and see routes to the parks."
     }
 
     var selectedParkName by remember { mutableStateOf(txtSelect) }
@@ -87,7 +88,6 @@ fun ThemeParksScreen(
         if (selectedInfo != null && settingsManager.homeStreet.isNotEmpty()) "${(15..40).random()} min" else null
     }
 
-    // --- DIÁLOGO DE AYUDA ---
     if (showHelpDialog) {
         AlertDialog(
             onDismissRequest = { showHelpDialog = false },
@@ -101,14 +101,12 @@ fun ThemeParksScreen(
             confirmButton = {},
             dismissButton = {
                 OutlinedButton(onClick = { showHelpDialog = false }) { Text(txtClose) }
-            },
-            shape = RoundedCornerShape(16.dp),
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+            }
         )
     }
 
     MainLayout(
-        title = txtExit,
+        title = txtExit, // Pasamos "Salir" a la barra azul
         showBackButton = true,
         onBackClick = onBack,
         userPhotoUrl = userPhotoUrl
@@ -117,29 +115,21 @@ fun ThemeParksScreen(
             modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. TÍTULO PRINCIPAL (Dorado + Magic)
             Text(
                 text = txtHeader,
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontSize = 35.sp,
-                    color = magicGold,
-                    textAlign = TextAlign.Center
-                )
+                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 38.sp, color = magicGold, textAlign = TextAlign.Center)
             )
 
             Spacer(Modifier.height(16.dp))
 
-            // 2. BARRA DE CLIMA
+            // BARRA DE CLIMA
             if (weather != null || isLoadingWeather) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                     color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = translucency),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp).fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         if (isLoadingWeather) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                         } else if (weather != null) {
@@ -163,7 +153,7 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 3. SELECTOR DE PARQUES
+            // SELECTOR DE PARQUES
             var expanded by remember { mutableStateOf(false) }
             Box(Modifier.fillMaxWidth()) {
                 Card(
@@ -174,42 +164,26 @@ fun ThemeParksScreen(
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp).fillMaxSize(),
-                        Arrangement.SpaceBetween,
-                        Alignment.CenterVertically
+                        Arrangement.SpaceBetween, Alignment.CenterVertically
                     ) {
                         Text(
                             text = selectedParkName,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontSize = 20.sp,
-                                color = Color.White,
-                                textAlign = TextAlign.Center
-                            ),
+                            style = MaterialTheme.typography.titleLarge.copy(color = Color.White, fontSize = 20.sp, textAlign = TextAlign.Center),
                             modifier = Modifier.weight(1f)
                         )
                         Icon(Icons.Default.ArrowDropDown, null, tint = Color.White)
                     }
                 }
 
-                // --- MENÚ DESPLEGABLE CORREGIDO ---
                 DropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)) // Fondo azul semi-transparente
+                    modifier = Modifier.fillMaxWidth(0.9f).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))
                 ) {
                     parksMap.keys.forEach { name ->
                         DropdownMenuItem(
                             text = {
-                                Text(
-                                    text = name,
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontSize = 18.sp,
-                                        color = Color.White, // Letras blancas
-                                        textAlign = TextAlign.Center
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                )
+                                Text(name, style = MaterialTheme.typography.titleLarge.copy(color = Color.White, fontSize = 18.sp, textAlign = TextAlign.Center), modifier = Modifier.fillMaxWidth())
                             },
                             onClick = { selectedParkName = name; expanded = false }
                         )
@@ -219,13 +193,9 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 4. BOTONES CENTRALES
+            // BOTONES CENTRALES
             if (selectedInfo != null) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
                         onClick = { onNavigateToDetail(selectedParkName, selectedInfo) },
                         modifier = Modifier.fillMaxWidth().height(75.dp),
@@ -233,12 +203,7 @@ fun ThemeParksScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = if (isEs) "Horários / Tempos de Espera" else if (isPt) "Horários / Tempos de Espera" else "Hours / Wait Times",
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
+                            Text(text = txtHoursWait, fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                             Text("$txtOpen ${selectedInfo.openingHours} - $txtCloseLabel ${selectedInfo.closingHours}", fontSize = 12.sp, textAlign = TextAlign.Center)
                         }
                     }
@@ -262,7 +227,6 @@ fun ThemeParksScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // 5. PARTE INFERIOR: CONFIGURACIÓN Y AYUDA
             Box(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                 Row(
                     modifier = Modifier.align(Alignment.CenterStart).clip(RoundedCornerShape(12.dp)).clickable { onNavigateToSettings() }.padding(8.dp),
