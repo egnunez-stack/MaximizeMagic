@@ -47,7 +47,8 @@ fun ThemeParksScreen(
     var showHelpDialog by remember { mutableStateOf(false) }
 
     val magicGold = Color(0xFFD4AF37)
-    val translucency = 0.3f
+    // Translucidez al 80% (Alpha 0.2)
+    val translucency = 0.2f
 
     // --- DICCIONARIO DE TEXTOS ---
     val txtAppName = "Maximize the Magic"
@@ -117,6 +118,7 @@ fun ThemeParksScreen(
             modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // 1. TÍTULO PRINCIPAL (Dorado + Magic)
             Text(
                 text = txtHeader,
                 style = MaterialTheme.typography.headlineLarge.copy(
@@ -128,7 +130,7 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // BARRA DE CLIMA
+            // 2. BARRA DE CLIMA
             if (weather != null || isLoadingWeather) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -159,7 +161,7 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // SELECTOR DE PARQUES
+            // 3. SELECTOR DE PARQUES (CORREGIDO: Letras Doradas + Fuente Magic)
             var expanded by remember { mutableStateOf(false) }
             Box(Modifier.fillMaxWidth()) {
                 Card(
@@ -175,7 +177,7 @@ fun ThemeParksScreen(
                         Text(
                             text = selectedParkName,
                             style = MaterialTheme.typography.headlineLarge.copy(
-                                color = magicGold, // TEXTO SELECCIONADO EN DORADO
+                                color = magicGold, // RESTAURADO A DORADO
                                 fontSize = 20.sp,
                                 textAlign = TextAlign.Center
                             ),
@@ -198,7 +200,7 @@ fun ThemeParksScreen(
                                 Text(
                                     text = name,
                                     style = MaterialTheme.typography.headlineLarge.copy(
-                                        color = magicGold, // ITEMS DE LA LISTA EN DORADO
+                                        color = magicGold, // RESTAURADO A DORADO EN LA LISTA
                                         fontSize = 18.sp,
                                         textAlign = TextAlign.Center
                                     ),
@@ -213,18 +215,30 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // BOTONES CENTRALES
+            // 4. BOTONES CENTRALES
             if (selectedInfo != null) {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                    // BOTÓN 1: HORARIOS / ESPERA CON EMOJI ☝️
                     Button(
                         onClick = { onNavigateToDetail(selectedParkName, selectedInfo) },
                         modifier = Modifier.fillMaxWidth().height(75.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = txtHoursWait, fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                            Text("$txtOpen ${selectedInfo.openingHours} - $txtCloseLabel ${selectedInfo.closingHours}", fontSize = 12.sp, textAlign = TextAlign.Center)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Spacer(Modifier.width(32.dp))
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(text = txtHoursWait, fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = Color.White)
+                                Text("$txtOpen ${selectedInfo.openingHours} - $txtCloseLabel ${selectedInfo.closingHours}", fontSize = 12.sp, textAlign = TextAlign.Center, color = Color.White)
+                            }
+                            Text(text = "☝️", fontSize = 24.sp, modifier = Modifier.padding(start = 8.dp))
                         }
                     }
 
@@ -240,13 +254,14 @@ fun ThemeParksScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
                     ) {
                         val driveText = if (drivingTimeLabel != null) "🚗 $txtDriveTime: $drivingTimeLabel $txtFromHome" else "📍 $txtNoHome"
-                        Text(driveText, fontSize = 14.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                        Text(driveText, fontSize = 14.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = Color.White)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // 5. CONFIGURACIÓN Y AYUDA
             Box(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                 Row(
                     modifier = Modifier.align(Alignment.CenterStart).clip(RoundedCornerShape(12.dp)).clickable { onNavigateToSettings() }.padding(8.dp),
