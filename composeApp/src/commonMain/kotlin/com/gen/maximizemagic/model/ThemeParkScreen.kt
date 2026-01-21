@@ -88,6 +88,7 @@ fun ThemeParksScreen(
         if (selectedInfo != null && settingsManager.homeStreet.isNotEmpty()) "${(15..40).random()} min" else null
     }
 
+    // --- DIÁLOGO DE AYUDA ---
     if (showHelpDialog) {
         AlertDialog(
             onDismissRequest = { showHelpDialog = false },
@@ -101,12 +102,14 @@ fun ThemeParksScreen(
             confirmButton = {},
             dismissButton = {
                 OutlinedButton(onClick = { showHelpDialog = false }) { Text(txtClose) }
-            }
+            },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
         )
     }
 
     MainLayout(
-        title = txtExit, // Pasamos "Salir" a la barra azul
+        title = txtExit, // Se verá en la barra azul con letras blancas
         showBackButton = true,
         onBackClick = onBack,
         userPhotoUrl = userPhotoUrl
@@ -115,14 +118,19 @@ fun ThemeParksScreen(
             modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // 1. TÍTULO PRINCIPAL
             Text(
                 text = txtHeader,
-                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 38.sp, color = magicGold, textAlign = TextAlign.Center)
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontSize = 38.sp,
+                    color = magicGold,
+                    textAlign = TextAlign.Center
+                )
             )
 
             Spacer(Modifier.height(16.dp))
 
-            // BARRA DE CLIMA
+            // 2. BARRA DE CLIMA
             if (weather != null || isLoadingWeather) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -153,7 +161,7 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // SELECTOR DE PARQUES
+            // 3. SELECTOR DE PARQUES
             var expanded by remember { mutableStateOf(false) }
             Box(Modifier.fillMaxWidth()) {
                 Card(
@@ -168,22 +176,37 @@ fun ThemeParksScreen(
                     ) {
                         Text(
                             text = selectedParkName,
-                            style = MaterialTheme.typography.titleLarge.copy(color = Color.White, fontSize = 20.sp, textAlign = TextAlign.Center),
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                textAlign = TextAlign.Center
+                            ),
                             modifier = Modifier.weight(1f)
                         )
                         Icon(Icons.Default.ArrowDropDown, null, tint = Color.White)
                     }
                 }
 
+                // --- MENÚ DESPLEGABLE TRASLÚCIDO AZUL ---
                 DropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
-                    modifier = Modifier.fillMaxWidth(0.9f).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)) // Fondo azul traslúcido
                 ) {
                     parksMap.keys.forEach { name ->
                         DropdownMenuItem(
                             text = {
-                                Text(name, style = MaterialTheme.typography.titleLarge.copy(color = Color.White, fontSize = 18.sp, textAlign = TextAlign.Center), modifier = Modifier.fillMaxWidth())
+                                Text(
+                                    text = name,
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        color = Color.White, // Letras Blancas
+                                        fontSize = 18.sp,
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             },
                             onClick = { selectedParkName = name; expanded = false }
                         )
@@ -193,7 +216,7 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // BOTONES CENTRALES
+            // 4. BOTONES CENTRALES
             if (selectedInfo != null) {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
@@ -227,9 +250,14 @@ fun ThemeParksScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // 5. CONFIGURACIÓN Y AYUDA
             Box(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                 Row(
-                    modifier = Modifier.align(Alignment.CenterStart).clip(RoundedCornerShape(12.dp)).clickable { onNavigateToSettings() }.padding(8.dp),
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onNavigateToSettings() }
+                        .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.Settings, null, modifier = Modifier.size(24.dp), tint = magicGold)

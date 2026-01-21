@@ -40,6 +40,8 @@ fun MaximizeMagicScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // --- LOGO ELIMINADO ---
+
             // 1. CARTEL DE BIENVENIDA
             Text(
                 text = txtWelcome,
@@ -49,7 +51,7 @@ fun MaximizeMagicScreen(
                 lineHeight = 40.sp
             )
 
-            // 2. BOTÓN GOOGLE (CORREGIDO: Azul con letras blancas)
+            // 2. BOTÓN GOOGLE
             Button(
                 onClick = onConnectGoogleClick,
                 modifier = Modifier
@@ -57,8 +59,8 @@ fun MaximizeMagicScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary, // Azul institucional
-                    contentColor = Color.White // Texto blanco
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White
                 ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
