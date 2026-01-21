@@ -50,9 +50,7 @@ fun ThemeParksScreen(
     val translucency = 0.3f
 
     // --- DICCIONARIO DE TEXTOS ---
-    // CAMBIO: Ahora el título de la barra siempre es el nombre de la App
     val txtAppName = "Maximize the Magic"
-
     val txtHeader = when { isPt -> "Planeje sua Visita"; isEs -> "Planifica tu Visita"; else -> "Plan your Visit" }
     val txtSelect = when { isPt -> "Selecione um Parque"; isEs -> "Seleccione un Parque"; else -> "Select a Park" }
     val txtHelpTitle = when { isPt -> "Informação"; isEs -> "Información"; else -> "Information" }
@@ -110,7 +108,7 @@ fun ThemeParksScreen(
     }
 
     MainLayout(
-        title = txtAppName, // CAMBIO: Usamos el nombre de la app con fuente Magic (configurada en MainLayout)
+        title = txtAppName,
         showBackButton = true,
         onBackClick = onBack,
         userPhotoUrl = userPhotoUrl
@@ -119,7 +117,6 @@ fun ThemeParksScreen(
             modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. TÍTULO PRINCIPAL (Dorado + Magic)
             Text(
                 text = txtHeader,
                 style = MaterialTheme.typography.headlineLarge.copy(
@@ -131,7 +128,7 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 2. BARRA DE CLIMA
+            // BARRA DE CLIMA
             if (weather != null || isLoadingWeather) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -162,7 +159,7 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 3. SELECTOR DE PARQUES (Tipografía Magic + Color Blanco)
+            // SELECTOR DE PARQUES
             var expanded by remember { mutableStateOf(false) }
             Box(Modifier.fillMaxWidth()) {
                 Card(
@@ -178,7 +175,7 @@ fun ThemeParksScreen(
                         Text(
                             text = selectedParkName,
                             style = MaterialTheme.typography.headlineLarge.copy(
-                                color = Color.White,
+                                color = magicGold, // TEXTO SELECCIONADO EN DORADO
                                 fontSize = 20.sp,
                                 textAlign = TextAlign.Center
                             ),
@@ -188,7 +185,6 @@ fun ThemeParksScreen(
                     }
                 }
 
-                // MENÚ DESPLEGABLE TRASLÚCIDO AZUL
                 DropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
@@ -202,7 +198,7 @@ fun ThemeParksScreen(
                                 Text(
                                     text = name,
                                     style = MaterialTheme.typography.headlineLarge.copy(
-                                        color = Color.White,
+                                        color = magicGold, // ITEMS DE LA LISTA EN DORADO
                                         fontSize = 18.sp,
                                         textAlign = TextAlign.Center
                                     ),
@@ -217,7 +213,7 @@ fun ThemeParksScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 4. BOTONES CENTRALES
+            // BOTONES CENTRALES
             if (selectedInfo != null) {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
