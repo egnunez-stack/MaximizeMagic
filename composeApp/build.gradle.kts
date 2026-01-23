@@ -56,6 +56,8 @@ kotlin {
             implementation("com.russhwolf:multiplatform-settings-no-arg:1.1.1")
 
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+
+            implementation("io.github.kevinnzou:compose-webview-multiplatform:1.9.40")
         }
 
         // --- DEPENDENCIAS EXCLUSIVAS DE ANDROID ---

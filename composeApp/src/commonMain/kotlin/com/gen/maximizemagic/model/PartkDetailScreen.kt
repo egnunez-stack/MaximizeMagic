@@ -15,13 +15,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gen.maximizemagic.network.*
 import com.gen.maximizemagic.ui.layout.MainLayout
+import com.multiplatform.webview.web.WebView
+import com.multiplatform.webview.web.rememberWebViewState
 import kotlinx.datetime.*
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -35,11 +36,12 @@ fun ParkDetailScreen(
     val api = remember { ParkApi() }
     var parkData by remember { mutableStateOf<QueueTimesResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-    val uriHandler = LocalUriHandler.current
 
-    // Color Dorado institucional
+    // --- ESTADOS PARA EL MAPA INCRUSTADO ---
+    var showEmbeddedMap by remember { mutableStateOf(false) }
+    var currentMapUrl by remember { mutableStateOf("") }
+
     val magicGold = Color(0xFFD4AF37)
-
     val settingsManager = remember { SettingsManager() }
     val isEs = settingsManager.language == "es"
 
@@ -60,16 +62,13 @@ fun ParkDetailScreen(
     var hideClosed by remember { mutableStateOf(false) }
     var sortByWaitTime by remember { mutableStateOf(false) }
 
-    // --- LÓGICA DE CARGA DE API ---
     LaunchedEffect(parkId) {
         try {
             isLoading = true
-            // Si el nombre contiene "Epic", usamos la nueva lógica para la API de Queue-Times (ID 334)
-            if (parkName.contains("Epic", ignoreCase = true)) {
-                // Suponiendo que tienes esta función en tu ParkApi o la llamas directamente
-                parkData = api.getEpicUniverseData()
+            parkData = if (parkName.contains("Epic", ignoreCase = true)) {
+                api.getEpicUniverseData()
             } else {
-                parkData = api.getParkData(parkId)
+                api.getParkData(parkId)
             }
         } catch (e: Exception) {
             println("#MaximizeMagic: Error cargando datos: ${e.message}")
@@ -78,12 +77,14 @@ fun ParkDetailScreen(
         }
     }
 
-    val openGoogleMaps: (Boolean) -> Unit = { useCurrentLocation ->
-        val rideName = selectedRideForRoute?.name ?: ""
-        val destination = "$rideName $parkName".replace(" ", "+")
-        val origin = if (useCurrentLocation) "" else "$parkName+Tickets"
-        val url = "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&travelmode=walking"
-        uriHandler.openUri(url)
+    // --- MEJORA EN EL GENERADOR DE URL PARA EVITAR "RUTA NO ENCONTRADA" ---
+    fun generateMapUrl(useCurrentLocation: Boolean, rideName: String): String {
+        val destination = "$rideName, $parkName, Orlando".replace(" ", "+")
+        // Usamos "My+Location" como palabra clave estándar de Google para WebView
+        val origin = if (useCurrentLocation) "My+Location" else "$parkName, Entrance".replace(" ", "+")
+
+        // Forzamos travelmode=walking para rutas dentro de parques
+        return "https://www.google.com/maps/dir/?api=1&origin=$origin&destination=$destination&travelmode=walking"
     }
 
     if (showRouteDialog && selectedRideForRoute != null) {
@@ -95,10 +96,18 @@ fun ParkDetailScreen(
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = { openGoogleMaps(true); showRouteDialog = false }, modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = {
+                        currentMapUrl = generateMapUrl(true, selectedRideForRoute!!.name)
+                        showEmbeddedMap = true
+                        showRouteDialog = false
+                    }, modifier = Modifier.fillMaxWidth()) {
                         Text(if (isEs) "Mi posición GPS" else "My GPS position")
                     }
-                    Button(onClick = { openGoogleMaps(false); showRouteDialog = false }, modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = {
+                        currentMapUrl = generateMapUrl(false, selectedRideForRoute!!.name)
+                        showEmbeddedMap = true
+                        showRouteDialog = false
+                    }, modifier = Modifier.fillMaxWidth()) {
                         Text(if (isEs) "Desde la entrada" else "From Entrance")
                     }
                 }
@@ -107,109 +116,122 @@ fun ParkDetailScreen(
     }
 
     MainLayout(
-        title = parkName,
+        title = if (showEmbeddedMap) (selectedRideForRoute?.name ?: parkName) else parkName,
         showBackButton = true,
-        onBackClick = onBack,
+        onBackClick = {
+            if (showEmbeddedMap) showEmbeddedMap = false else onBack()
+        },
         userPhotoUrl = userPhotoUrl
     ) { paddingValues ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
 
-            // BARRA DE BÚSQUEDA
-            Surface(tonalElevation = 2.dp, shadowElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        placeholder = { Text(txtSearch, fontSize = 14.sp) },
-                        leadingIcon = { Icon(Icons.Default.Search, null, Modifier.size(20.dp)) },
-                        singleLine = true,
-                        shape = MaterialTheme.shapes.medium
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = hideClosed, onCheckedChange = { hideClosed = it })
-                            Text(txtHideClosed, style = MaterialTheme.typography.bodySmall)
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = sortByWaitTime, onCheckedChange = { sortByWaitTime = it })
-                            Text(txtSortWait, style = MaterialTheme.typography.bodySmall)
-                        }
+            if (showEmbeddedMap) {
+                // --- VISTA DEL MAPA INCRUSTADO CON JAVASCRIPT HABILITADO ---
+                val webViewState = rememberWebViewState(currentMapUrl)
+                WebView(
+                    state = webViewState,
+                    modifier = Modifier.fillMaxSize(),
+                    onCreated = { view ->
+                        // Importante: Google Maps requiere JS para calcular rutas
+                        view.settings.javaScriptEnabled = true
+                        view.settings.domStorageEnabled = true
                     }
-                }
-            }
-
-            if (isLoading) {
-                Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
-            } else if (parkData == null) {
-                Box(Modifier.fillMaxSize(), Alignment.Center) { Text(txtNoData) }
+                )
             } else {
-                // Aplanar la lista de atracciones (Epic Universe viene por lands)
-                val allRidesRaw = (parkData!!.rides + parkData!!.lands.flatMap { it.rides })
-
-                val allFilteredRides = allRidesRaw.filter { ride ->
-                    val matchesSearch = ride.name.contains(searchQuery, ignoreCase = true)
-                    val matchesOpen = if (hideClosed) ride.is_open else true
-                    matchesSearch && matchesOpen
-                }.let { if (sortByWaitTime) it.sortedByDescending { r -> r.wait_time } else it }
-
-                LazyColumn(modifier = Modifier.fillMaxSize().weight(1f)) {
-                    // 1. RECOMENDACIÓN MÁGICA
-                    if (searchQuery.isEmpty() && !sortByWaitTime) {
-                        val recommendation = allRidesRaw.filter { it.is_open && it.wait_time > 0 }.minByOrNull { it.wait_time }
-                        if (recommendation != null) {
-                            item {
-                                Card(
-                                    modifier = Modifier.padding(16.dp).fillMaxWidth().clickable {
-                                        selectedRideForRoute = recommendation
-                                        showRouteDialog = true
-                                    },
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9C4))
-                                ) {
-                                    Column(Modifier.padding(16.dp)) {
-                                        Text(txtMagicRec, fontWeight = FontWeight.Bold, color = Color(0xFFFBC02D))
-                                        Text(
-                                            text = recommendation.name,
-                                            style = MaterialTheme.typography.titleLarge.copy(
-                                                color = magicGold, // DORADO
-                                                fontSize = 22.sp
-                                            )
-                                        )
-                                        Text("${recommendation.wait_time} $txtWaitMin", fontWeight = FontWeight.ExtraBold)
-                                    }
+                // --- VISTA NORMAL DE LA LISTA ---
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Surface(tonalElevation = 2.dp, shadowElevation = 2.dp, modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                modifier = Modifier.fillMaxWidth().height(52.dp),
+                                placeholder = { Text(txtSearch, fontSize = 14.sp) },
+                                leadingIcon = { Icon(Icons.Default.Search, null, Modifier.size(20.dp)) },
+                                singleLine = true,
+                                shape = MaterialTheme.shapes.medium
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Checkbox(checked = hideClosed, onCheckedChange = { hideClosed = it })
+                                    Text(txtHideClosed, style = MaterialTheme.typography.bodySmall)
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Checkbox(checked = sortByWaitTime, onCheckedChange = { sortByWaitTime = it })
+                                    Text(txtSortWait, style = MaterialTheme.typography.bodySmall)
                                 }
                             }
                         }
                     }
 
-                    // 2. LISTADO DE ATRACCIONES
-                    items(allFilteredRides) { attraction ->
-                        RideRow(
-                            attraction = attraction,
-                            waitSuffix = txtWaitMin,
-                            closedText = txtClosed,
-                            magicGold = magicGold,
-                            onClick = {
-                                selectedRideForRoute = attraction
-                                showRouteDialog = true
+                    if (isLoading) {
+                        Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+                    } else if (parkData == null) {
+                        Box(Modifier.fillMaxSize(), Alignment.Center) { Text(txtNoData) }
+                    } else {
+                        val allRidesRaw = (parkData!!.rides + parkData!!.lands.flatMap { it.rides })
+                        val allFilteredRides = allRidesRaw.filter { ride ->
+                            val matchesSearch = ride.name.contains(searchQuery, ignoreCase = true)
+                            val matchesOpen = if (hideClosed) ride.is_open else true
+                            matchesSearch && matchesOpen
+                        }.let { if (sortByWaitTime) it.sortedByDescending { r -> r.wait_time } else it }
+
+                        LazyColumn(modifier = Modifier.fillMaxSize().weight(1f)) {
+                            if (searchQuery.isEmpty() && !sortByWaitTime) {
+                                val recommendation = allRidesRaw.filter { it.is_open && it.wait_time > 0 }.minByOrNull { it.wait_time }
+                                if (recommendation != null) {
+                                    item {
+                                        Card(
+                                            modifier = Modifier.padding(16.dp).fillMaxWidth().clickable {
+                                                selectedRideForRoute = recommendation
+                                                showRouteDialog = true
+                                            },
+                                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9C4))
+                                        ) {
+                                            Column(Modifier.padding(16.dp)) {
+                                                Text(txtMagicRec, fontWeight = FontWeight.Bold, color = Color(0xFFFBC02D))
+                                                Text(
+                                                    text = recommendation.name,
+                                                    style = MaterialTheme.typography.titleLarge.copy(
+                                                        color = magicGold,
+                                                        fontSize = 22.sp
+                                                    )
+                                                )
+                                                Text("${recommendation.wait_time} $txtWaitMin", fontWeight = FontWeight.ExtraBold)
+                                            }
+                                        }
+                                    }
+                                }
                             }
+
+                            items(allFilteredRides) { attraction ->
+                                RideRow(
+                                    attraction = attraction,
+                                    waitSuffix = txtWaitMin,
+                                    closedText = txtClosed,
+                                    magicGold = magicGold,
+                                    onClick = {
+                                        selectedRideForRoute = attraction
+                                        showRouteDialog = true
+                                    }
+                                )
+                                HorizontalDivider(thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                            }
+                        }
+
+                        Text(
+                            text = txtPoweredBy,
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.fillMaxWidth().padding(8.dp),
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray
                         )
-                        HorizontalDivider(thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
                     }
                 }
-
-                // 3. PIE DE PÁGINA (Créditos API - Obligatorio)
-                Text(
-                    text = txtPoweredBy,
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.fillMaxWidth().padding(8.dp),
-                    textAlign = TextAlign.Center,
-                    color = Color.Gray
-                )
             }
         }
     }
@@ -234,7 +256,7 @@ fun RideRow(
             Text(
                 text = attraction.name,
                 style = MaterialTheme.typography.titleLarge.copy(
-                    color = magicGold, // DORADO
+                    color = magicGold,
                     fontSize = 18.sp
                 )
             )

@@ -32,13 +32,11 @@ fun MaximizeMagicScreen(
     val txtGoogle = if (isEs) "Conectarse con Google" else "Connect with Google"
     val txtExit = if (isEs) "Salir" else "Exit"
 
-    // 1. Construcción del texto con dos tamaños diferentes
+    // 1. Construcción del texto con tamaños diferenciados
     val annotatedWelcome = buildAnnotatedString {
-        // Parte normal: "Bienvenido a"
         withStyle(style = SpanStyle(fontSize = 32.sp)) {
             append(welcomePrefix)
         }
-        // Parte resaltada: "Maximize the Magic" (30% más grande que la anterior aprox)
         withStyle(style = SpanStyle(fontSize = 42.sp, fontWeight = FontWeight.Bold)) {
             append(appName)
         }
@@ -53,23 +51,22 @@ fun MaximizeMagicScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(32.dp),
+                .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            // Cambiamos verticalArrangement para controlar la altura manualmente
             verticalArrangement = Arrangement.Top
         ) {
-            // 2. ESPACIADOR INICIAL (Ajusta este valor para subir o bajar el bloque)
-            // Usamos un Spacer con peso relativo al final para que quede un 20% más arriba del centro.
+            // 2. ESPACIADOR PARA SUBIR EL CONTENIDO (20% más arriba del centro)
             Spacer(modifier = Modifier.height(100.dp))
+
+            // EL LOGO HA SIDO ELIMINADO DE AQUÍ DEFINITIVAMENTE
 
             // 3. CARTEL DE BIENVENIDA
             Text(
                 text = annotatedWelcome,
-                // Mantenemos headlineLarge para que tome la tipografía Magic del tema
                 style = MaterialTheme.typography.headlineLarge,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 48.dp),
-                lineHeight = 46.sp // Ajuste de interlineado para los distintos tamaños
+                modifier = Modifier.padding(bottom = 40.dp),
+                lineHeight = 46.sp
             )
 
             // 4. BOTÓN GOOGLE
@@ -114,7 +111,7 @@ fun MaximizeMagicScreen(
                 )
             }
 
-            // 6. ESPACIADOR AL FINAL (Con peso mayor al inicial para empujar el contenido hacia arriba)
+            // 6. ESPACIADOR AL FINAL
             Spacer(modifier = Modifier.weight(1f))
         }
     }
