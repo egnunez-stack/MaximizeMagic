@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.facebook.CallbackManager // Importante para Facebook
+import com.google.android.gms.ads.MobileAds // Importante para AdMob
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 
@@ -27,6 +28,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         currentActivity = this
+
+        // --- INICIALIZACIÓN DE ADMOB ---
+        // Se debe inicializar el SDK de anuncios antes de cargar cualquier banner
+        MobileAds.initialize(this) { status ->
+            println("#MaximizeMagic: AdMob Inicializado correctamente")
+        }
 
         setContent {
             // Llama a la función principal definida en commonMain

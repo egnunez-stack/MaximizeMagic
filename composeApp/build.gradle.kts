@@ -74,6 +74,10 @@ kotlin {
 
             implementation("com.facebook.android:facebook-login:17.0.0")
 
+            // En el bloque de dependencias de Android
+            implementation("com.google.android.gms:play-services-ads:23.0.0")
+
+
         }
 
         // --- DEPENDENCIAS EXCLUSIVAS DE iOS ---

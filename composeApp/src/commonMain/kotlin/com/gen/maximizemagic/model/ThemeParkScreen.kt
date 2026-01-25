@@ -27,6 +27,7 @@ import com.gen.maximizemagic.ParkInfo
 import com.gen.maximizemagic.network.ParkApi
 import com.gen.maximizemagic.network.OrlandoWeather
 import com.gen.maximizemagic.ui.layout.MainLayout
+import com.gen.maximizemagic.ui.components.AdBanner // Importamos el componente publicitario
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewState
 import kotlinx.datetime.*
@@ -129,173 +130,186 @@ fun ThemeParksScreen(
         },
         userPhotoUrl = userPhotoUrl
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        // USAMOS COLUMN PARA DIVIDIR EL CONTENIDO DE LA PUBLICIDAD
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
 
-            if (showEmbeddedMap) {
-                // --- VISTA DEL MAPA INCRUSTADO ---
-                val webViewState = rememberWebViewState(currentMapUrl)
-                WebView(
-                    state = webViewState,
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                // --- VISTA NORMAL ---
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = txtHeader,
-                        style = MaterialTheme.typography.headlineLarge.copy(
-                            fontSize = 38.sp, color = magicGold, textAlign = TextAlign.Center
-                        )
+            // 1. CONTENIDO PRINCIPAL (Box con weight 1f)
+            Box(modifier = Modifier.weight(1f)) {
+
+                if (showEmbeddedMap) {
+                    // --- VISTA DEL MAPA INCRUSTADO ---
+                    val webViewState = rememberWebViewState(currentMapUrl)
+                    WebView(
+                        state = webViewState,
+                        modifier = Modifier.fillMaxSize()
                     )
+                } else {
+                    // --- VISTA NORMAL ---
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = txtHeader,
+                            style = MaterialTheme.typography.headlineLarge.copy(
+                                fontSize = 38.sp, color = magicGold, textAlign = TextAlign.Center
+                            )
+                        )
 
-                    Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(16.dp))
 
-                    // BARRA DE CLIMA
-                    if (weather != null || isLoadingWeather) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = translucency),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                if (isLoadingWeather) {
-                                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                                } else if (weather != null) {
-                                    val w = weather!!
-                                    Text("📍 Orlando, FL", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(text = "🌡️ ${w.currentTemp}°C", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-                                        Spacer(Modifier.width(12.dp))
-                                        Text("🌧️ $txtRain ${w.rainChance}%", style = MaterialTheme.typography.bodyMedium)
+                        // BARRA DE CLIMA
+                        if (weather != null || isLoadingWeather) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = translucency),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                    if (isLoadingWeather) {
+                                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                                    } else if (weather != null) {
+                                        val w = weather!!
+                                        Text("📍 Orlando, FL", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(text = "🌡️ ${w.currentTemp}°C", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+                                            Spacer(Modifier.width(12.dp))
+                                            Text("🌧️ $txtRain ${w.rainChance}%", style = MaterialTheme.typography.bodyMedium)
+                                        }
+                                        Text(
+                                            text = "⬇️ ${w.minTemp}°C | ⬆️ ${w.maxTemp}°C | ${w.conditionText}",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
+                                            textAlign = TextAlign.Center
+                                        )
                                     }
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+
+                        // SELECTOR DE PARQUES (Letras Blancas Magic)
+                        var expanded by remember { mutableStateOf(false) }
+                        Box(Modifier.fillMaxWidth()) {
+                            Card(
+                                onClick = { expanded = true },
+                                modifier = Modifier.fillMaxWidth().height(60.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 16.dp).fillMaxSize(),
+                                    Arrangement.SpaceBetween, Alignment.CenterVertically
+                                ) {
                                     Text(
-                                        text = "⬇️ ${w.minTemp}°C | ⬆️ ${w.maxTemp}°C | ${w.conditionText}",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
-                                        textAlign = TextAlign.Center
+                                        text = selectedParkName,
+                                        style = MaterialTheme.typography.headlineLarge.copy(
+                                            color = Color.White, fontSize = 20.sp, textAlign = TextAlign.Center
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Icon(Icons.Default.ArrowDropDown, null, tint = Color.White)
+                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false },
+                                modifier = Modifier
+                                    .fillMaxWidth(0.9f)
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+                            ) {
+                                parksMap.keys.forEach { name ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                text = name,
+                                                style = MaterialTheme.typography.headlineLarge.copy(
+                                                    color = Color.White, fontSize = 18.sp, textAlign = TextAlign.Center
+                                                ),
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        },
+                                        onClick = { selectedParkName = name; expanded = false }
                                     )
                                 }
                             }
                         }
-                    }
 
-                    Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(16.dp))
 
-                    // SELECTOR DE PARQUES (Letras Blancas Magic)
-                    var expanded by remember { mutableStateOf(false) }
-                    Box(Modifier.fillMaxWidth()) {
-                        Card(
-                            onClick = { expanded = true },
-                            modifier = Modifier.fillMaxWidth().height(60.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 16.dp).fillMaxSize(),
-                                Arrangement.SpaceBetween, Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = selectedParkName,
-                                    style = MaterialTheme.typography.headlineLarge.copy(
-                                        color = Color.White, fontSize = 20.sp, textAlign = TextAlign.Center
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Icon(Icons.Default.ArrowDropDown, null, tint = Color.White)
-                            }
-                        }
-
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false },
-                            modifier = Modifier
-                                .fillMaxWidth(0.9f)
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
-                        ) {
-                            parksMap.keys.forEach { name ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = name,
-                                            style = MaterialTheme.typography.headlineLarge.copy(
-                                                color = Color.White, fontSize = 18.sp, textAlign = TextAlign.Center
-                                            ),
-                                            modifier = Modifier.fillMaxWidth()
-                                        )
-                                    },
-                                    onClick = { selectedParkName = name; expanded = false }
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-
-                    // BOTONES CENTRALES
-                    if (selectedInfo != null) {
-                        Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            // BOTÓN 1: HORARIOS
-                            Button(
-                                onClick = { onNavigateToDetail(selectedParkName, selectedInfo) },
-                                modifier = Modifier.fillMaxWidth().height(75.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
-                            ) {
-                                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                    Spacer(Modifier.width(32.dp))
-                                    Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(text = txtHoursWait, fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = Color.White)
-                                        Text("$txtOpen ${selectedInfo.openingHours} - $txtCloseLabel ${selectedInfo.closingHours}", fontSize = 12.sp, textAlign = TextAlign.Center, color = Color.White)
+                        // BOTONES CENTRALES
+                        if (selectedInfo != null) {
+                            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                // BOTÓN 1: HORARIOS
+                                Button(
+                                    onClick = { onNavigateToDetail(selectedParkName, selectedInfo) },
+                                    modifier = Modifier.fillMaxWidth().height(75.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
+                                ) {
+                                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                        Spacer(Modifier.width(32.dp))
+                                        Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(text = txtHoursWait, fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = Color.White)
+                                            Text("$txtOpen ${selectedInfo.openingHours} - $txtCloseLabel ${selectedInfo.closingHours}", fontSize = 12.sp, textAlign = TextAlign.Center, color = Color.White)
+                                        }
+                                        Text(text = "☝️", fontSize = 24.sp, modifier = Modifier.padding(start = 8.dp))
                                     }
-                                    Text(text = "☝️", fontSize = 24.sp, modifier = Modifier.padding(start = 8.dp))
+                                }
+
+                                // BOTÓN 2: CONDUCCIÓN
+                                Button(
+                                    onClick = {
+                                        if (settingsManager.homeStreet.isNotEmpty()) {
+                                            currentMapUrl = generateDrivingUrl(selectedInfo)
+                                            showEmbeddedMap = true
+                                        } else { onNavigateToSettings() }
+                                    },
+                                    modifier = Modifier.fillMaxWidth().height(75.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
+                                ) {
+                                    val driveText = if (drivingTimeLabel != null) "🚗 $txtDriveTime: $drivingTimeLabel $txtFromHome" else "📍 $txtNoHome"
+                                    Text(driveText, fontSize = 14.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = Color.White)
                                 }
                             }
+                        }
 
-                            // BOTÓN 2: CONDUCCIÓN (AHORA CON MAPA INCRUSTADO)
-                            Button(
-                                onClick = {
-                                    if (settingsManager.homeStreet.isNotEmpty()) {
-                                        currentMapUrl = generateDrivingUrl(selectedInfo)
-                                        showEmbeddedMap = true
-                                    } else { onNavigateToSettings() }
-                                },
-                                modifier = Modifier.fillMaxWidth().height(75.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = translucency))
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        // CONFIGURACIÓN Y AYUDA
+                        Box(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                            Row(
+                                modifier = Modifier.align(Alignment.CenterStart).clip(RoundedCornerShape(12.dp)).clickable { onNavigateToSettings() }.padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val driveText = if (drivingTimeLabel != null) "🚗 $txtDriveTime: $drivingTimeLabel $txtFromHome" else "📍 $txtNoHome"
-                                Text(driveText, fontSize = 14.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = Color.White)
+                                Icon(Icons.Default.Settings, null, modifier = Modifier.size(24.dp), tint = magicGold)
+                                Spacer(Modifier.width(8.dp))
+                                Text(txtSettings, color = magicGold, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                             }
-                        }
-                    }
 
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // CONFIGURACIÓN Y AYUDA
-                    Box(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                        Row(
-                            modifier = Modifier.align(Alignment.CenterStart).clip(RoundedCornerShape(12.dp)).clickable { onNavigateToSettings() }.padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Settings, null, modifier = Modifier.size(24.dp), tint = magicGold)
-                            Spacer(Modifier.width(8.dp))
-                            Text(txtSettings, color = magicGold, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                        }
-
-                        FloatingActionButton(
-                            onClick = { showHelpDialog = true },
-                            modifier = Modifier.align(Alignment.CenterEnd).size(48.dp),
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f),
-                            contentColor = MaterialTheme.colorScheme.primary
-                        ) {
-                            Icon(Icons.Default.Info, contentDescription = "Help")
+                            FloatingActionButton(
+                                onClick = { showHelpDialog = true },
+                                modifier = Modifier.align(Alignment.CenterEnd).size(48.dp),
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f),
+                                contentColor = MaterialTheme.colorScheme.primary
+                            ) {
+                                Icon(Icons.Default.Info, contentDescription = "Help")
+                            }
                         }
                     }
                 }
             }
+
+            // 2. PUBLICIDAD AL PIE (ADMOB)
+            AdBanner(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .background(Color.Black.copy(alpha = 0.05f))
+            )
         }
     }
 }
