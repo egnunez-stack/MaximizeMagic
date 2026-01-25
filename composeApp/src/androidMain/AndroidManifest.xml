@@ -52,8 +52,9 @@
         </activity>
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
-        <!--android:value="ca-app-pub-7735727279062405~4832150425"Colocarlo cuando salga a prod-->
+            android:value="ca-app-pub-7735727279062405~4832150425"/>
+
+        <!--android:value="ca-app-pub-3940256099942544~3347511713"/>este es el de prueba-->
 
 </application>
 </manifest>
