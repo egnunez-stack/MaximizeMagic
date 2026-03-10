@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     kotlin("plugin.serialization") version "2.0.21"
     alias(libs.plugins.google.services)
+    kotlin("native.cocoapods")
 }
 
 kotlin {
@@ -17,21 +18,21 @@ kotlin {
         }
     }
 
-    // Configuración explícita de targets iOS para mejorar la detección del IDE
-    val iosX64 = iosX64()
-    val iosArm64 = iosArm64()
-    val iosSimulatorArm64 = iosSimulatorArm64()
-
-    listOf(
-        iosX64,
-        iosArm64,
-        iosSimulatorArm64
-    ).forEach { target ->
-        target.binaries.framework {
+    cocoapods {
+        summary = "MaximizeMagic"
+        homepage = "https://github.com/JetBrains/kotlin"
+        version = "1.0.0"
+        ios.deploymentTarget = "14.1"
+        framework {
             baseName = "ComposeApp"
             isStatic = true
         }
+        pod("GoogleSignIn")
     }
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
     sourceSets {
         commonMain.dependencies {
