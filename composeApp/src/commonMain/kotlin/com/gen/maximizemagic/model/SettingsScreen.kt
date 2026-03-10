@@ -16,7 +16,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gen.maximizemagic.ui.layout.MainLayout
 import kotlinx.coroutines.delay
-import kotlinx.datetime.*
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+
+import kotlin.time.Duration
 
 @Composable
 fun SettingsScreen(
@@ -26,9 +30,6 @@ fun SettingsScreen(
 ) {
     val settingsManager = remember { SettingsManager() }
     var currentLanguage by remember { mutableStateOf(settingsManager.language) }
-
-    val isEs = currentLanguage == "es"
-    val isPt = currentLanguage == "pt"
 
     var showHomeDialog by remember { mutableStateOf(false) }
     var showArrivalDialog by remember { mutableStateOf(false) }
@@ -56,7 +57,7 @@ fun SettingsScreen(
                 "flight_num" to "Nº do Voo",
                 "date" to "Data (AAAA-MM-DD)",
                 "time" to "Hora (HH:MM)",
-                "checkin_msg" to "Atenção! Check-in aberto para: "
+                "checkin_msg" to "Atenção! Check-in abierto para: "
             )
             "es" -> mapOf(
                 "title" to "Configuración",
@@ -108,10 +109,11 @@ fun SettingsScreen(
 
     fun validateCheckIn(date: String, time: String, flight: String) {
         try {
-            val now = Clock.System.now()
             val flightDateTime = LocalDateTime.parse("${date}T${time}:00")
             val flightInstant = flightDateTime.toInstant(TimeZone.currentSystemDefault())
-            val duration = flightInstant - now
+            // Use Clock from kotlinx.datetime
+            val nowInstant = kotlinx.datetime.Clock.System.now()
+            val duration: Duration = flightInstant - nowInstant
             if (duration.inWholeHours in (0..23)) {
                 checkInNotice = "${texts["checkin_msg"]}$flight"
             }
@@ -223,7 +225,7 @@ fun SettingsScreen(
     if (showHomeDialog) {
         var tempStreet by remember { mutableStateOf(settingsManager.homeStreet) }
         var tempNumber by remember { mutableStateOf(settingsManager.homeNumber) }
-        var tempCity by remember { mutableStateOf(if(settingsManager.homeCity.isEmpty()) "Orlando" else settingsManager.homeCity) }
+        var tempCity by remember { mutableStateOf(settingsManager.homeCity.ifEmpty { "Orlando" }) }
         var cityExpanded by remember { mutableStateOf(false) }
         val cities = listOf("Orlando", "Kissimmee", "Celebration", "Winter Garden", "Lake Buena Vista", "Davenport")
 
@@ -253,7 +255,9 @@ fun SettingsScreen(
             },
             confirmButton = {
                 Button(onClick = {
-                    settingsManager.homeStreet = tempStreet; settingsManager.homeNumber = tempNumber; settingsManager.homeCity = tempCity
+                    settingsManager.homeStreet = tempStreet
+                    settingsManager.homeNumber = tempNumber
+                    settingsManager.homeCity = tempCity
                     showHomeDialog = false
                 }) { Text(texts["save"]!!) }
             },
@@ -261,28 +265,19 @@ fun SettingsScreen(
         )
     }
 
-    // --- DIÁLOGO IDIOMA (CON PORTUGUÉS) ---
+    // --- DIÁLOGO IDIOMA ---
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
             title = { Text(texts["select_lang"]!!, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    ListItem(headlineContent = { Text("Español") }, modifier = Modifier.clickable {
-                        settingsManager.language = "es"; currentLanguage = "es"; showLanguageDialog = false
-                    })
-                    HorizontalDivider()
-                    ListItem(headlineContent = { Text("English") }, modifier = Modifier.clickable {
-                        settingsManager.language = "en"; currentLanguage = "en"; showLanguageDialog = false
-                    })
-                    HorizontalDivider()
-                    // OPCIÓN PORTUGUÉS RESTAURADA
-                    ListItem(headlineContent = { Text("Português") }, modifier = Modifier.clickable {
-                        settingsManager.language = "pt"; currentLanguage = "pt"; showLanguageDialog = false
-                    })
+                    DropdownMenuItem(text = { Text("English") }, onClick = { currentLanguage = "en"; settingsManager.language = "en"; showLanguageDialog = false })
+                    DropdownMenuItem(text = { Text("Español") }, onClick = { currentLanguage = "es"; settingsManager.language = "es"; showLanguageDialog = false })
+                    DropdownMenuItem(text = { Text("Português") }, onClick = { currentLanguage = "pt"; settingsManager.language = "pt"; showLanguageDialog = false })
                 }
             },
-            confirmButton = { TextButton(onClick = { showLanguageDialog = false }) { Text(texts["cancel"]!!) } }
+            confirmButton = {}
         )
     }
 }

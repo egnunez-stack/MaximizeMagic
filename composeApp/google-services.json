@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "953154559379",
+    "project_id": "maximizemagic-232d2",
+    "storage_bucket": "maximizemagic-232d2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:953154559379:android:68e9be2057ceb85c5c1c66",
+        "android_client_info": {
+          "package_name": "com.gen.maximizemagic"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "953154559379-p0e52hfk7rkc5ueomj27046ka9rkj9em.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gen.maximizemagic",
+            "certificate_hash": "a66c81f41cd72925d00b0651076887745341a8ef"
+          }
+        },
+        {
+          "client_id": "953154559379-kgiv8lt6rtecbgrk4lhgg4fhuvv22vdm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQz6l-RlIUdMzkpP2g2LRIo9ANtwEgkNo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "953154559379-kgiv8lt6rtecbgrk4lhgg4fhuvv22vdm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
