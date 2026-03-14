@@ -9,9 +9,9 @@ androidx-core = "1.13.1"
 androidx-espresso = "3.6.1"
 androidx-lifecycle = "2.8.4"
 androidx-testExt = "1.2.1"
-composeMultiplatform = "1.7.0"
+composeMultiplatform = "1.7.3"
 junit = "4.13.2"
-kotlin = "2.1.0"
+kotlin = "2.1.21"
 google-services = "4.4.2"
 
 [libraries]

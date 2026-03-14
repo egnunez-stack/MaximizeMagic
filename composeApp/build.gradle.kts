@@ -1,12 +1,13 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    kotlin("plugin.serialization") version "2.1.0"
+    kotlin("plugin.serialization") version "2.1.21"
     alias(libs.plugins.google.services)
     kotlin("native.cocoapods")
 }
@@ -31,8 +32,12 @@ kotlin {
             version = "7.1.0"
             extraOpts += listOf(
                 "-compiler-option", "-fmodules",
-                "-compiler-option", "-fbuiltin-module-map",
-                "-compiler-option", "-Wno-error=unused-command-line-argument"
+                // Forzamos a Clang a usar una carpeta de caché dentro de tu proyecto
+                // Esto evita el error de "ASTReadError" y "Darwin not found"
+                "-compiler-option", "-fmodules-cache-path=${layout.buildDirectory.get()}/clang-module-cache",
+                "-compiler-option", "-fno-modules-validate-system-headers",
+                "-compiler-option", "-Wno-error=unused-command-line-argument",
+                "-compiler-option", "-D__IPHONE_OS_VERSION_MIN_REQUIRED=140100"
             )
         }
     }
@@ -40,6 +45,17 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
+
+    // Forzar compatibilidad con Xcode 16 y omitir avisos de versión
+    targets.withType<KotlinNativeTarget> {
+        compilations.getByName("main").kotlinOptions {
+            freeCompilerArgs += listOf(
+                "-Xexpect-actual-classes",
+                "-Xoverride-konan-properties=appleSdkRoot=$(xcrun --sdk iphoneos --show-sdk-path)",
+                "-Pkotlin.apple.xcodeCompatibility.nowarn=true"
+            )
+        }
+    }
 
     sourceSets {
         commonMain.dependencies {
