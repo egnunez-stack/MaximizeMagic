@@ -14,7 +14,7 @@ plugins {
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 
@@ -27,7 +27,10 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
         }
-        pod("GoogleSignIn")
+        pod("GoogleSignIn") {
+            version = "7.1.0"
+            extraOpts += listOf("-compiler-option", "-fmodules")
+        }
     }
 
     iosX64()
@@ -100,8 +103,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
