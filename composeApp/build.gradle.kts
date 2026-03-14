@@ -29,7 +29,11 @@ kotlin {
         }
         pod("GoogleSignIn") {
             version = "7.1.0"
-            extraOpts += listOf("-compiler-option", "-fmodules")
+            extraOpts += listOf(
+                "-compiler-option", "-fmodules",
+                "-compiler-option", "-fbuiltin-module-map",
+                "-compiler-option", "-Wno-error=unused-command-line-argument"
+            )
         }
     }
 
