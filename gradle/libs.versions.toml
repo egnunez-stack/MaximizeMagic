@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.2"
+agp = "9.1.0"
 android-compileSdk = "35"
 android-minSdk = "24"
 android-targetSdk = "35"
@@ -11,7 +11,7 @@ androidx-lifecycle = "2.8.4"
 androidx-testExt = "1.2.1"
 composeMultiplatform = "1.7.3"
 junit = "4.13.2"
-kotlin = "2.1.21"
+kotlin = "2.2.10"
 google-services = "4.4.2"
 
 [libraries]

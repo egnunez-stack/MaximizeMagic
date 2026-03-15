@@ -48,8 +48,8 @@ kotlin {
 
     // Forzar compatibilidad con Xcode 16 y omitir avisos de versión
     targets.withType<KotlinNativeTarget> {
-        compilations.getByName("main").kotlinOptions {
-            freeCompilerArgs += listOf(
+        compilerOptions {
+            freeCompilerArgs.addAll(
                 "-Xexpect-actual-classes",
                 "-Xoverride-konan-properties=appleSdkRoot=$(xcrun --sdk iphoneos --show-sdk-path)",
                 "-Pkotlin.apple.xcodeCompatibility.nowarn=true"
