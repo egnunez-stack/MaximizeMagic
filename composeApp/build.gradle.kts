@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
@@ -66,34 +65,34 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
 
-            implementation("org.jetbrains.compose.material:material-icons-core:1.7.3")
-            implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
+            implementation(libs.compose.material.icons.core)
+            implementation(libs.compose.material.icons.extended)
 
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
-            implementation("io.ktor:ktor-client-core:2.3.12")
-            implementation("io.ktor:ktor-client-content-negotiation:2.3.12")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.12")
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.json)
 
-            implementation("media.kamel:kamel-image:0.9.0")
-            implementation("com.russhwolf:multiplatform-settings-no-arg:1.1.1")
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
-            implementation("io.github.kevinnzou:compose-webview-multiplatform:1.9.40")
+            implementation(libs.kamel.image)
+            implementation(libs.multiplatform.settings)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.compose.webview)
         }
 
         androidMain.dependencies {
-            implementation("com.google.android.material:material:1.12.0")
+            implementation(libs.google.material)
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-            implementation("io.ktor:ktor-client-okhttp:2.3.12")
-            implementation("com.google.android.gms:play-services-auth:21.2.0")
-            implementation("com.facebook.android:facebook-login:17.0.0")
-            implementation("com.google.android.gms:play-services-ads:23.0.0")
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.play.services.auth)
+            implementation(libs.facebook.login)
+            implementation(libs.play.services.ads)
         }
 
         iosMain.dependencies {
-            implementation("io.ktor:ktor-client-darwin:2.3.12")
+            implementation(libs.ktor.client.darwin)
         }
     }
 }
