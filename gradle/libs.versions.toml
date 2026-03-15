@@ -1,17 +1,17 @@
 [versions]
-agp = "9.1.0"
-android-compileSdk = "35"
+agp = "8.7.3"
+android-compileSdk = "34"
 android-minSdk = "24"
-android-targetSdk = "35"
+android-targetSdk = "34"
 androidx-activity = "1.9.3"
 androidx-appcompat = "1.7.1"
 androidx-core = "1.13.1"
 androidx-espresso = "3.6.1"
 androidx-lifecycle = "2.8.4"
 androidx-testExt = "1.2.1"
-composeMultiplatform = "1.7.3"
+composeMultiplatform = "1.7.1"
 junit = "4.13.2"
-kotlin = "2.2.10"
+kotlin = "2.1.0"
 google-services = "4.4.2"
 ktor = "2.3.12"
 kamel = "0.9.0"
@@ -22,6 +22,7 @@ material = "1.12.0"
 playServicesAuth = "21.2.0"
 facebookLogin = "17.0.0"
 playServicesAds = "23.0.0"
+skie = "0.10.10"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -64,4 +65,6 @@ androidLibrary = { id = "com.android.library", version.ref = "agp" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
+skie = { id = "co.touchlab.skie", version.ref = "skie" }

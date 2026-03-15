@@ -4,7 +4,8 @@ import ComposeApp
 
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
+        // El nombre debe coincidir con el archivo Kotlin + "Kt"
+        return com_gen_maximizemagicMainViewControllerKt.MainViewController()
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
@@ -16,6 +17,3 @@ struct ContentView: View {
             .ignoresSafeArea()
     }
 }
-
-
-

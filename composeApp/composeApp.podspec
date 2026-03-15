@@ -1,20 +1,22 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'composeApp'
-    spec.version                  = '1.0.0'
-    spec.homepage                 = 'https://github.com/JetBrains/kotlin'
+    spec.version                  = '1.0'
+    spec.homepage                 = 'Link to the Shared Module homepage'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
     spec.license                  = ''
-    spec.summary                  = 'MaximizeMagic'
-    spec.vendored_frameworks      = 'build/cocoapods/framework/ComposeApp.framework'
+    spec.summary                  = 'Logic-only shared module for MaximizeMagic'
+    spec.vendored_frameworks      = 'build/cocoapods/framework/SharedTodo.framework'
     spec.libraries                = 'c++'
-    spec.ios.deployment_target    = '14.1'
+    spec.ios.deployment_target    = '15.0'
+    spec.dependency 'AppAuth', '1.7.6'
+    spec.dependency 'GTMAppAuth', '4.1.1'
     spec.dependency 'GoogleSignIn', '7.1.0'
                 
-    if !Dir.exist?('build/cocoapods/framework/ComposeApp.framework') || Dir.empty?('build/cocoapods/framework/ComposeApp.framework')
+    if !Dir.exist?('build/cocoapods/framework/SharedTodo.framework') || Dir.empty?('build/cocoapods/framework/SharedTodo.framework')
         raise "
 
-        Kotlin framework 'ComposeApp' doesn't exist yet, so a proper Xcode project can't be generated.
+        Kotlin framework 'SharedTodo' doesn't exist yet, so a proper Xcode project can't be generated.
         'pod install' should be executed after running ':generateDummyFramework' Gradle task:
 
             ./gradlew :composeApp:generateDummyFramework
@@ -28,7 +30,7 @@ Pod::Spec.new do |spec|
                 
     spec.pod_target_xcconfig = {
         'KOTLIN_PROJECT_PATH' => ':composeApp',
-        'PRODUCT_MODULE_NAME' => 'ComposeApp',
+        'PRODUCT_MODULE_NAME' => 'SharedTodo',
     }
                 
     spec.script_phases = [

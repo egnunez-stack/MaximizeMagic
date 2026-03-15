@@ -5,8 +5,10 @@ PODS:
   - AppAuth/Core (1.7.6)
   - AppAuth/ExternalUserAgent (1.7.6):
     - AppAuth/Core
-  - composeApp (1.0.0):
+  - composeApp (1.0):
+    - AppAuth (= 1.7.6)
     - GoogleSignIn (= 7.1.0)
+    - GTMAppAuth (= 4.1.1)
   - GoogleSignIn (7.1.0):
     - AppAuth (< 2.0, >= 1.7.3)
     - GTMAppAuth (< 5.0, >= 4.1.1)
@@ -32,11 +34,11 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AppAuth: d4f13a8fe0baf391b2108511793e4b479691fb73
-  composeApp: d40a3448c56327abda6798a737360954fda52aa9
+  composeApp: 246fe790463acd7615e8afa132149aec376ad49b
   GoogleSignIn: d4281ab6cf21542b1cfaff85c191f230b399d2db
   GTMAppAuth: f69bd07d68cd3b766125f7e072c45d7340dea0de
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
 
-PODFILE CHECKSUM: 183a0659f51063138f504d22b54a9077c1acc92d
+PODFILE CHECKSUM: 7185fb05cca2e2ac98cc5e3dba870f7043f4a8ab
 
 COCOAPODS: 1.16.2

@@ -1,19 +1,25 @@
 {
   "name": "composeApp",
-  "version": "1.0.0",
-  "homepage": "https://github.com/JetBrains/kotlin",
+  "version": "1.0",
+  "homepage": "Link to the Shared Module homepage",
   "source": {
     "http": ""
   },
   "authors": "",
   "license": "",
-  "summary": "MaximizeMagic",
-  "vendored_frameworks": "build/cocoapods/framework/ComposeApp.framework",
+  "summary": "Logic-only shared module for MaximizeMagic",
+  "vendored_frameworks": "build/cocoapods/framework/SharedTodo.framework",
   "libraries": "c++",
   "platforms": {
-    "ios": "14.1"
+    "ios": "15.0"
   },
   "dependencies": {
+    "AppAuth": [
+      "1.7.6"
+    ],
+    "GTMAppAuth": [
+      "4.1.1"
+    ],
     "GoogleSignIn": [
       "7.1.0"
     ]
@@ -23,7 +29,7 @@
   },
   "pod_target_xcconfig": {
     "KOTLIN_PROJECT_PATH": ":composeApp",
-    "PRODUCT_MODULE_NAME": "ComposeApp"
+    "PRODUCT_MODULE_NAME": "SharedTodo"
   },
   "script_phases": [
     {
